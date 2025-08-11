@@ -1,6 +1,7 @@
 {
   "name": "astral-draft",
   "version": "1.0.0",
+  "type": "module",
   "description": "Elite Fantasy Football",
   "main": "index.tsx",
   "scripts": {
@@ -34,18 +35,12 @@
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@google/genai": "^1.9.0",
-    "@stripe/react-stripe-js": "^3.9.0",
-    "@stripe/stripe-js": "^7.8.0",
     "@types/bcryptjs": "^2.4.6",
-    "@types/cheerio": "^0.22.35",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.17",
     "@types/validator": "^13.15.2",
-    "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.2",
-    "cheerio": "^1.1.2",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -59,7 +54,6 @@
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.535.0",
-    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -69,7 +63,6 @@
     "recharts": "^3.1.2",
     "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.7",
-    "stripe": "^18.4.0",
     "validator": "^13.15.15"
   },
   "devDependencies": {
