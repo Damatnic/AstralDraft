@@ -1,17 +1,26 @@
 /**
- * Production User Database Migration
- * Migrates from simple PIN-based auth to comprehensive user system
+ * Production User Database Migr    // Create refresh tokens table for JWT management
+    await runQuery(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )
+    `);igrates from simple PIN-based auth to comprehensive user system
  * with JWT authentication, email verification, and user profiles
  */
 
-import { runQuery, getRow, getAll } from '../db/index';
+import { runQuery, getRow, getRows } from '../db/index';
 
 export const createProductionUserTables = async (): Promise<void> => {
   try {
     console.log('🔄 Creating production user tables...');
 
     // Create users table with comprehensive fields
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
         email TEXT UNIQUE NOT NULL,
@@ -31,7 +40,7 @@ export const createProductionUserTables = async (): Promise<void> => {
         customization TEXT DEFAULT '{}',
         preferences TEXT DEFAULT '{}',
         is_active BOOLEAN DEFAULT TRUE
-      );
+      )
     `);
 
     // Create refresh tokens table for JWT management
@@ -186,7 +195,7 @@ export const migrateFromSimpleAuth = async (): Promise<void> => {
     console.log('🔄 Migrating from simple auth system...');
 
     // Check if simple_auth_users table exists
-    const simpleAuthExists = await db.get(`
+    const simpleAuthExists = await getRow(`
       SELECT name FROM sqlite_master 
       WHERE type='table' AND name='simple_auth_users'
     `);
@@ -197,7 +206,7 @@ export const migrateFromSimpleAuth = async (): Promise<void> => {
     }
 
     // Get all simple auth users
-    const simpleUsers = await db.all(`
+    const simpleUsers = await getRows(`
       SELECT * FROM simple_auth_users
     `);
 
@@ -219,7 +228,7 @@ export const migrateFromSimpleAuth = async (): Promise<void> => {
         const passwordHash = await bcrypt.hash(tempPassword, 12);
 
         // Migrate user data
-        await db.run(`
+        await runQuery(`
           INSERT OR IGNORE INTO users (
             id,
             email,
@@ -272,7 +281,7 @@ export const migrateFromSimpleAuth = async (): Promise<void> => {
     }
 
     // Create migration log
-    await db.run(`
+    await runQuery(`
       INSERT INTO user_audit_log (user_id, action, details) 
       SELECT id, 'MIGRATION_FROM_SIMPLE_AUTH', 
              'User migrated from simple PIN-based auth system' 
@@ -298,7 +307,7 @@ export const setupAdminUser = async (): Promise<void> => {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@astral-draft.com';
     const passwordHash = await bcrypt.hash(adminPassword, 12);
 
-    await db.run(`
+    await runQuery(`
       INSERT OR IGNORE INTO users (
         email,
         username,
@@ -354,12 +363,12 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
     const now = new Date().toISOString();
     
     // Clean up expired refresh tokens
-    const expiredRefreshTokens = await db.run(`
+    const expiredRefreshTokens = await runQuery(`
       DELETE FROM refresh_tokens WHERE expires_at < ?
     `, [now]);
 
     // Clean up expired sessions
-    const expiredSessions = await db.run(`
+    const expiredSessions = await runQuery(`
       DELETE FROM user_sessions WHERE expires_at < ?
     `, [now]);
 
@@ -367,7 +376,7 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
-    const oldAuditLogs = await db.run(`
+    const oldAuditLogs = await runQuery(`
       DELETE FROM user_audit_log WHERE created_at < ?
     `, [sixMonthsAgo.toISOString()]);
 

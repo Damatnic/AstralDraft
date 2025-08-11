@@ -135,10 +135,8 @@ class DraftWebSocketServer {
         return res.status(400).json({ error: 'userId and teamId are required' });
       }
 
-      let room = this.draftRooms.get(leagueId);
-      if (!room) {
+      if (!this.draftRooms.has(leagueId)) {
         this.createDraftRoom(leagueId);
-        room = this.draftRooms.get(leagueId)!;
       }
 
       res.json({

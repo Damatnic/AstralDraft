@@ -1,9 +1,5 @@
 /**
- * Oracle Reaimport { OracleAnalyticsDashboard } from '../analytics/OracleAnalyticsDashboard';
-import { PredictionResponse } from '../../backend/routes/enhancedOracle';
-import { BarChart3, Target, Menu } from 'lucide-react';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { notificationService } from '../../services/notificationService';me Prediction Interface (Refactored)
+ * Oracle Real-Time Prediction Interface (Refactored)
  * Simplified main interface using extracted components
  */
 
@@ -22,7 +18,7 @@ import PredictionDetail from './PredictionDetail';
 import OracleErrorBoundary from './OracleErrorBoundary';
 import { OracleAnalyticsDashboard } from '../analytics/OracleAnalyticsDashboard';
 import { PredictionResponse } from '../../backend/routes/enhancedOracle';
-import { BarChart3, Target, Settings } from 'lucide-react';
+import { BarChart3, Target, Menu, Settings } from 'lucide-react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { NotificationCenter } from './NotificationCenter';
 import { NotificationPreferencesComponent } from './NotificationPreferences';

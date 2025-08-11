@@ -13,20 +13,26 @@ const JWT_SECRET = process.env.JWT_SECRET || 'astral-draft-super-secret-key-chan
 // Extended Request interface with user data
 export interface AuthRequest extends Request {
   user?: {
-    userId: string;
-    email: string;
+    id: number;
     username: string;
-    subscription: string;
-    isAdmin: boolean;
+    email: string;
+    display_name: string;
+    avatar_url: string | null;
+    created_at: string;
+    is_active: boolean;
+    subscription?: string;
+    isAdmin?: boolean;
   };
 }
 
 // JWT Payload interface
 interface JWTPayload {
-  userId: string;
+  id: number;
+  username: string;
   email: string;
-  subscription: string;
-  isAdmin: boolean;
+  display_name: string;
+  subscription?: string;
+  isAdmin?: boolean;
   iat: number;
   exp: number;
 }
@@ -69,10 +75,10 @@ export const authenticateToken = async (
 
     // Verify user exists and is active
     const user = await getRow(`
-      SELECT id, email, username, subscription, is_admin, is_active
+      SELECT id, email, username, display_name, avatar_url, created_at, subscription, is_admin, is_active
       FROM users 
       WHERE id = ? AND is_active = TRUE
-    `, [decoded.userId]);
+    `, [decoded.id]);
 
     if (!user) {
       res.status(401).json({
@@ -85,9 +91,13 @@ export const authenticateToken = async (
 
     // Attach user data to request
     req.user = {
-      userId: user.id,
-      email: user.email,
+      id: user.id,
       username: user.username,
+      email: user.email,
+      display_name: user.display_name,
+      avatar_url: user.avatar_url,
+      created_at: user.created_at,
+      is_active: user.is_active,
       subscription: user.subscription,
       isAdmin: user.is_admin
     };
@@ -192,16 +202,20 @@ export const optionalAuth = async (
       const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       
       const user = await getRow(`
-        SELECT id, email, username, subscription, is_admin, is_active
+        SELECT id, email, username, display_name, avatar_url, created_at, subscription, is_admin, is_active
         FROM users 
         WHERE id = ? AND is_active = TRUE
-      `, [decoded.userId]);
+      `, [decoded.id]);
 
       if (user) {
         req.user = {
-          userId: user.id,
-          email: user.email,
+          id: user.id,
           username: user.username,
+          email: user.email,
+          display_name: user.display_name,
+          avatar_url: user.avatar_url,
+          created_at: user.created_at,
+          is_active: user.is_active,
           subscription: user.subscription,
           isAdmin: user.is_admin
         };

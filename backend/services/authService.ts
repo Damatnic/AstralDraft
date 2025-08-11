@@ -77,13 +77,13 @@ export function generateTokens(user: User): AuthTokens {
     const accessToken = jwt.sign(
         { ...payload, type: 'access' },
         JWT_SECRET as string,
-        { expiresIn: JWT_EXPIRES_IN as string }
+        { expiresIn: JWT_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
         { ...payload, type: 'refresh' },
         JWT_SECRET as string,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN as string }
+        { expiresIn: JWT_REFRESH_EXPIRES_IN }
     );
 
     // Calculate expiration time for access token
