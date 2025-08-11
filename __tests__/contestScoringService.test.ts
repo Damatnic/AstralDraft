@@ -84,7 +84,9 @@ const mockContestData = {
       { rank: 3, percentage: 20, amount: 400, description: '3rd Place' }
     ],
     guaranteedPrize: true
-  }
+  },
+  participants: [],
+  predictions: []
 };
 
 describe('ContestScoringService', () => {
@@ -511,7 +513,7 @@ describe('ContestScoringService', () => {
       expect(leaderboard?.rankings.length).toBe(3);
       
       // Rankings should be sorted by score descending
-      const rankings = leaderboard!.rankings;
+      const rankings = leaderboard?.rankings || [];
       for (let i = 0; i < rankings.length - 1; i++) {
         expect(rankings[i].totalScore).toBeGreaterThanOrEqual(rankings[i + 1].totalScore);
         expect(rankings[i].rank).toBe(i + 1);
@@ -529,12 +531,12 @@ describe('ContestScoringService', () => {
 
     test('should calculate potential payouts correctly', async () => {
       const leaderboard = contestScoringService.getContestLeaderboard(testContest.id);
-      const rankings = leaderboard!.rankings;
+      const rankings = leaderboard?.rankings || [];
 
       // First place should get largest payout
-      expect(rankings[0].potentialPayout).toBe(1000); // 50% of $2000
-      expect(rankings[1].potentialPayout).toBe(600);  // 30% of $2000
-      expect(rankings[2].potentialPayout).toBe(400);  // 20% of $2000
+      expect(rankings[0]?.potentialPayout).toBe(1000); // 50% of $2000
+      expect(rankings[1]?.potentialPayout).toBe(600);  // 30% of $2000
+      expect(rankings[2]?.potentialPayout).toBe(400);  // 20% of $2000
     });
 
     test('should handle tiebreakers correctly', async () => {
@@ -611,10 +613,10 @@ describe('ContestScoringService', () => {
       expect(results?.payouts.length).toBe(3);
       expect(results?.stats.totalParticipants).toBe(3);
       expect(results?.stats.totalPrizePool).toBe(2000);
-      expect(results?.topPerformers.length).toBeGreaterThan(0);
+      expect(results?.stats.topPerformers.length).toBeGreaterThan(0);
       
       // Verify payout amounts
-      const totalPayouts = results!.payouts.reduce((sum, payout) => sum + payout.amount, 0);
+      const totalPayouts = results?.payouts.reduce((sum, payout) => sum + payout.amount, 0) || 0;
       expect(totalPayouts).toBe(2000);
     });
   });

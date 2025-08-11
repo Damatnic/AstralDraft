@@ -4,10 +4,16 @@
   "description": "Advanced fantasy football draft assistant with AI-powered analytics and mobile-optimized interface",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "favicon.svg",
       "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any maskable"
+      "sizes": "32x32 16x16",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml", 
+      "sizes": "192x192",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/?utm_source=pwa",

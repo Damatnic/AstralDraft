@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node', // Changed from jsdom for API tests
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
