@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+yarn.lock
+
+# Build outputs
+dist/
+coverage/
+
+# Environment variables
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Large files and executables
+*.exe
+*.pdb
+*.rlib
+*.rmeta
+target/
+build/
+dist-electron/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+
+# Other projects (keep only Astral Draft)
+../Astral Nexus/
+../Astral Striker/
+../astralcore/
+../Aplay/
+../Project Builder/
+../AstralStream/
