@@ -11,7 +11,9 @@ export default defineConfig(({ mode }) => {
         'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
         'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
-        global: 'globalThis'
+        global: 'globalThis',
+        // Ensure crypto polyfills work in production
+        'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development')
       },
       resolve: {
         alias: {
@@ -23,10 +25,12 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        // Optimize bundle for mobile devices
-        target: 'es2015',
+        // Optimize bundle for mobile devices and Netlify deployment
+        target: 'es2020', // Updated for better compatibility
         minify: 'esbuild',
         cssMinify: true,
+        // Increase chunk size limit for Netlify
+        chunkSizeWarningLimit: 1500,
         rollupOptions: {
           output: {
             // Split chunks for better caching
@@ -39,8 +43,6 @@ export default defineConfig(({ mode }) => {
             }
           }
         },
-        // Chunk size warnings
-        chunkSizeWarningLimit: 1000,
         // Asset inlining threshold (inline small assets)
         assetsInlineLimit: 4096
       },
