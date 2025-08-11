@@ -45,3 +45,4 @@ dist-electron/
 ../Aplay/
 ../Project Builder/
 ../AstralStream/
+.early.coverage

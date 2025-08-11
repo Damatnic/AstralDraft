@@ -77,16 +77,20 @@
     "@types/supertest": "^6.0.3",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.7.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "nodemon": "^3.1.10",
     "prettier": "^3.2.5",
+    "stream-browserify": "^3.0.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
+    "util": "^0.12.5",
     "vite": "^7.0.6"
   }
 }

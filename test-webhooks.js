@@ -3,7 +3,12 @@
  * Tests the webhook infrastructure with comprehensive scenarios
  */
 
-const { webhookTestingService } = require('./services/webhookTestingService');
+const { performance } = require('perf_hooks');
+const axios = require('axios');
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const { webhookTestingService } = require('./backend/services/webhookTestingService');
 
 async function runWebhookTests() {
     console.log('🚀 Starting Stripe Webhook Testing Suite\n');
