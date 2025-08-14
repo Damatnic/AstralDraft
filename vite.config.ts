@@ -52,21 +52,31 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [
         react(),
-        // Copy service worker to dist folder
+        // Copy service worker to dist folder - only during build
         {
           name: 'copy-sw',
-          writeBundle() {
-            const fs = require('fs');
-            const path = require('path');
-            try {
-              fs.copyFileSync(
-                path.resolve(__dirname, 'sw.js'),
-                path.resolve(__dirname, 'dist/sw.js')
-              );
-              console.log('✓ Service worker copied to dist/sw.js');
-            } catch (error) {
-              console.warn('⚠ Failed to copy service worker:', error.message);
-            }
+          apply: 'build', // Only run during build, not dev
+          generateBundle() {
+            // Use dynamic import to avoid bundling Node.js modules
+            return new Promise(async (resolve) => {
+              try {
+                const { copyFileSync, existsSync } = await import('fs');
+                const { resolve: pathResolve } = await import('path');
+                
+                const swPath = pathResolve(process.cwd(), 'sw.js');
+                const distPath = pathResolve(process.cwd(), 'dist/sw.js');
+                
+                if (existsSync(swPath)) {
+                  copyFileSync(swPath, distPath);
+                  console.log('✓ Service worker copied to dist/sw.js');
+                } else {
+                  console.log('ℹ Service worker not found, skipping copy');
+                }
+              } catch (error) {
+                console.warn('⚠ Failed to copy service worker:', error.message);
+              }
+              resolve();
+            });
           }
         }
       ],
@@ -84,10 +94,11 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
-          // Crypto polyfills for browser compatibility
+          // Node.js polyfills for browser compatibility
           crypto: 'crypto-browserify',
           stream: 'stream-browserify',
           util: 'util',
+          events: 'events',
           // Performance aliases for common paths
           '@components': path.resolve(__dirname, 'components'),
           '@services': path.resolve(__dirname, 'services'),

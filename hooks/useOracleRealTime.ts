@@ -8,11 +8,8 @@ import { oracleRealTimeService, LivePredictionUpdate } from '../services/oracleR
 import oracleCollaborativeService, { 
     CollaborativeMessage, 
     SharedInsight, 
-    CommunityPoll,
-    CollaborativeRoom,
-    InsightCreationParams,
-    PollCreationParams
-} from '../services/oracleCollaborativeService';
+    CollaborativeRoom
+} from '../services/oracleCollaborativeServiceMock';
 
 /**
  * Hook for Oracle real-time functionality

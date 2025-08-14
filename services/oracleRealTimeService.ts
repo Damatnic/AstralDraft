@@ -4,7 +4,13 @@
  */
 
 import { EventEmitter } from 'events';
-import { WebSocket } from 'ws';
+
+// Use browser's native WebSocket API instead of Node.js 'ws' package
+declare global {
+    interface Window {
+        WebSocket: typeof WebSocket;
+    }
+}
 
 export interface OracleRealtimeUser {
     id: string;

@@ -27,9 +27,8 @@ import { oracleRealTimeService, LivePredictionUpdate } from '../../services/orac
 import oracleCollaborativeService, { 
     CollaborativeMessage, 
     SharedInsight, 
-    CommunityPoll,
     CollaborativeRoom 
-} from '../../services/oracleCollaborativeService';
+} from '../../services/oracleCollaborativeServiceMock';
 
 interface OracleRealTimeDashboardProps {
     predictionId: string;
