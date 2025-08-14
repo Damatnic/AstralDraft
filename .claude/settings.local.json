@@ -16,7 +16,8 @@
       "Bash(find:*)",
       "Bash(timeout 30s npm run dev)",
       "Bash(cp:*)",
-      "Bash(npm run preview:*)"
+      "Bash(npm run preview:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": [],
