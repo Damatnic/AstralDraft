@@ -6,48 +6,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     const isProduction = mode === 'production';
     
-    const getVendorChunk = (id: string) => {
-      // Keep React and ReactDOM together - CRITICAL for proper React functionality
-      if (id.includes('react') || id.includes('react-dom')) {
-        return 'vendor-react';
-      }
-      if (id.includes('framer-motion')) return 'vendor-framer';
-      if (id.includes('lucide-react')) return 'vendor-icons';
-      if (id.includes('@dnd-kit')) return 'vendor-dnd';
-      if (id.includes('recharts')) return 'vendor-recharts';
-      if (id.includes('chart.js') || id.includes('react-chartjs')) return 'vendor-chartjs';
-      if (id.includes('d3')) return 'vendor-d3';
-      if (id.includes('lodash')) return 'vendor-lodash';
-      if (id.includes('date-fns')) return 'vendor-date';
-      if (id.includes('axios')) return 'vendor-http';
-      if (id.includes('@google/genai') || id.includes('genai')) return 'vendor-ai';
-      return 'vendor-misc';
-    };
-
-    const getFeatureChunk = (id: string) => {
-      if (id.includes('/components/oracle/') || id.includes('/services/oracle')) return 'feature-oracle';
-      if (id.includes('/components/draft/') || id.includes('/hooks/useDraft') || id.includes('/hooks/useSnake') || id.includes('/hooks/useAuction')) return 'feature-draft';
-      if (id.includes('/components/analytics/') || id.includes('/components/reports/') || id.includes('/hooks/useHistorical')) return 'feature-analytics';
-      if (id.includes('/components/manager/') || id.includes('/components/team/') || id.includes('/components/commissioner/')) return 'feature-management';
-      if (id.includes('/components/player/') || id.includes('/components/rankings/')) return 'feature-player';
-      if (id.includes('/components/matchup/') || id.includes('/components/comparison/')) return 'feature-matchup';
-      if (id.includes('/services/') && !id.includes('/services/oracle')) return 'app-services';
-      return null;
-    };
-
-    const getRouteChunk = (id: string) => {
-      if (!id.includes('/views/') && !id.includes('View.tsx')) return null;
-      if (id.includes('Oracle')) return 'route-oracle';
-      if (id.includes('Draft')) return 'route-draft';
-      if (id.includes('Analytics') || id.includes('Reports')) return 'route-analytics';
-      if (id.includes('Commissioner') || id.includes('Manager')) return 'route-management';
-      return 'route-misc';
-    };
-
-    const getManualChunks = (id: string) => {
-      if (id.includes('node_modules')) return getVendorChunk(id);
-      return getFeatureChunk(id) || getRouteChunk(id);
-    };
+    // Removed duplicate chunk logic to prevent conflicts - using inline logic in build.rollupOptions.output.manualChunks
     
     return {
       plugins: [
@@ -120,32 +79,39 @@ export default defineConfig(({ mode }) => {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
           output: {
-            // Improved chunk splitting strategy
+            // Critical fix for React Children undefined error
             manualChunks: (id: string) => {
+              // CRITICAL: Keep React core together to prevent initialization issues
               if (id.includes('node_modules')) {
-                // Critical: Keep React ecosystem together
-                if (id.includes('react') || id.includes('react-dom')) {
+                // React ecosystem must stay together - this fixes the Children undefined error
+                if (id.includes('react-dom') || id.includes('react/') || id.includes('react\\') || 
+                    id.includes('/react.') || id.includes('\\react.') || id.includes('react@') ||
+                    id.includes('scheduler') || id.includes('react-is')) {
                   return 'vendor-react';
                 }
+                
+                // Keep React-related libraries together to avoid conflicts
+                if (id.includes('framer-motion') || id.includes('lucide-react') || 
+                    id.includes('react-chartjs') || id.includes('recharts')) {
+                  return 'vendor-react-ui';
+                }
+                
                 // Group other vendors
-                if (id.includes('framer-motion')) return 'vendor-framer';
-                if (id.includes('lucide-react')) return 'vendor-icons';
                 if (id.includes('@dnd-kit')) return 'vendor-dnd';
-                if (id.includes('recharts')) return 'vendor-recharts';
-                if (id.includes('chart.js') || id.includes('react-chartjs')) return 'vendor-chartjs';
-                if (id.includes('d3')) return 'vendor-d3';
-                if (id.includes('lodash')) return 'vendor-lodash';
-                if (id.includes('date-fns')) return 'vendor-date';
+                if (id.includes('chart.js') || id.includes('d3')) return 'vendor-charts';
+                if (id.includes('lodash') || id.includes('date-fns')) return 'vendor-utils';
                 if (id.includes('axios')) return 'vendor-http';
                 if (id.includes('@google/genai') || id.includes('genai')) return 'vendor-ai';
                 return 'vendor-misc';
               }
-              // App code chunking
+              
+              // Less aggressive app code chunking to avoid dependency issues
               if (id.includes('/components/oracle/') || id.includes('/services/oracle')) return 'feature-oracle';
-              if (id.includes('/components/draft/') || id.includes('/hooks/useDraft') || id.includes('/hooks/useSnake') || id.includes('/hooks/useAuction')) return 'feature-draft';
-              if (id.includes('/components/analytics/') || id.includes('/components/reports/') || id.includes('/hooks/useHistorical')) return 'feature-analytics';
-              if (id.includes('/components/manager/') || id.includes('/components/team/') || id.includes('/components/commissioner/')) return 'feature-management';
+              if (id.includes('/components/draft/')) return 'feature-draft';
+              if (id.includes('/components/analytics/')) return 'feature-analytics';
               if (id.includes('/services/') && !id.includes('/services/oracle')) return 'app-services';
+              
+              // Keep core app components together
               return null;
             },
             // File naming strategy for caching
@@ -179,23 +145,31 @@ export default defineConfig(({ mode }) => {
         // Cleanup output directory
         emptyOutDir: true
       },
-      // Dependency optimization
+      // Critical dependency optimization for React
       optimizeDeps: {
         include: [
           'react',
           'react-dom',
           'react-dom/client',
           'react/jsx-runtime',
+          'react/jsx-dev-runtime',
+          'scheduler',
           'framer-motion',
           'lucide-react',
           'recharts',
           '@dnd-kit/core',
           '@dnd-kit/sortable'
         ],
-        // Exclude problematic dependencies
-        exclude: ['@types/node'],
-        // Force React dependencies to be optimized together
-        force: true
+        // Exclude problematic dependencies that cause React conflicts
+        exclude: ['@types/node', 'react-is'],
+        // Force React dependencies to be optimized together - critical for preventing Children undefined
+        force: true,
+        // Ensure proper ESBuild handling of React
+        esbuildOptions: {
+          target: 'es2020',
+          // Preserve React's internal structure
+          keepNames: true
+        }
       },
       // Enhanced caching strategy
       cacheDir: 'node_modules/.vite',

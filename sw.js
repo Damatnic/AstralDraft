@@ -102,6 +102,18 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve cached content when offline
 self.addEventListener('fetch', event => {
+  // Filter out chrome-extension URLs and other non-cacheable requests
+  if (event.request.url.startsWith('chrome-extension://') ||
+      event.request.url.startsWith('moz-extension://') ||
+      event.request.url.startsWith('safari-extension://') ||
+      event.request.url.startsWith('edge-extension://') ||
+      event.request.url.startsWith('about:') ||
+      event.request.url.startsWith('moz-extension:') ||
+      event.request.method !== 'GET') {
+    // Let browser handle these requests normally
+    return;
+  }
+
   // Handle Oracle API requests
   if (event.request.url.includes('/api/oracle')) {
     event.respondWith(handleOracleAPIRequest(event.request));
@@ -119,26 +131,57 @@ self.addEventListener('fetch', event => {
 
         // Make network request and cache if successful
         return fetch(event.request).then(response => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+          // Enhanced response validation to prevent caching errors
+          if (!response || 
+              response.status !== 200 || 
+              (response.type !== 'basic' && response.type !== 'cors') ||
+              !response.url ||
+              response.url.startsWith('chrome-extension://') ||
+              response.url.startsWith('moz-extension://')) {
             return response;
           }
 
-          // Clone response for caching
-          const responseToCache = response.clone();
+          // Additional check for cacheable content types
+          const contentType = response.headers.get('Content-Type') || '';
+          const isHTML = contentType.includes('text/html');
+          const isJS = contentType.includes('javascript') || contentType.includes('application/javascript');
+          const isCSS = contentType.includes('text/css');
+          const isImage = contentType.includes('image/');
+          const isFont = contentType.includes('font/') || response.url.includes('.woff') || response.url.includes('.ttf');
           
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
+          // Only cache known safe content types
+          if (isHTML || isJS || isCSS || isImage || isFont || response.url.includes('/api/')) {
+            try {
+              // Clone response for caching with error handling
+              const responseToCache = response.clone();
+              
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseToCache);
+              }).catch(error => {
+                console.log('Failed to cache response:', error.message);
+              });
+            } catch (error) {
+              console.log('Failed to clone response for caching:', error.message);
+            }
+          }
 
           return response;
         });
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log('Network request failed:', error.message);
+        
         // Return offline page for navigation requests
         if (event.request.mode === 'navigate') {
           return caches.match('/index.html');
         }
+        
+        // For other requests, return a basic offline response
+        return new Response('Offline', { 
+          status: 503, 
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
       })
   );
 });
