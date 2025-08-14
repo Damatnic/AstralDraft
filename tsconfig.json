@@ -17,9 +17,23 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "components/**/*",
+    "hooks/**/*",
+    "services/**/*",
+    "utils/**/*",
+    "contexts/**/*",
+    "views/**/*",
+    "types.ts",
+    "types/**/*",
+    "index.tsx",
+    "App.tsx",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": ["node_modules", "dist", "backend/**/*"],
   "references": [{ "path": "./tsconfig.backend.json" }]
 }

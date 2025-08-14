@@ -93,8 +93,14 @@ export default defineConfig(({ mode }) => {
             chunkFileNames: 'assets/[name]-[hash].js',
             assetFileNames: 'assets/[name]-[hash].[ext]'
           },
-          // External dependencies optimization
-          external: isProduction ? [] : ['@types/node']
+          // External dependencies optimization  
+          external: isProduction ? [] : ['@types/node'],
+          onwarn(warning, warn) {
+            // Suppress specific warnings during build
+            if (warning.code === 'UNRESOLVED_IMPORT') return;
+            if (warning.code === 'THIS_IS_UNDEFINED') return;
+            warn(warning);
+          }
         },
         // Asset optimization
         assetsInlineLimit: 2048, // Reduced for better caching
