@@ -4,7 +4,7 @@
  * Designed for mobile-first experience with responsive design
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { ZapIcon } from '../icons/ZapIcon';

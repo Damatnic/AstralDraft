@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { League, Team } from '../../types';
 import { Widget } from '../ui/Widget';

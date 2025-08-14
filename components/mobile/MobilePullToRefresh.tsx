@@ -3,7 +3,7 @@
  * Implements native-style pull-to-refresh functionality with smooth animations
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { RefreshCwIcon } from 'lucide-react';
 import { useThrottle } from '../../utils/mobilePerformanceUtils';

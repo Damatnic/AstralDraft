@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useAppState } from '../../contexts/AppContext';
 import Modal from '../ui/Modal';

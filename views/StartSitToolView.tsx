@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { getStartSitAdvice } from '../services/geminiService';
 import type { League, Player, StartSitAdvice, Team } from '../types';

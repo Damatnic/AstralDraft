@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Player, Team, GroundingChunk } from '../../types';
 import { streamOracleResponse } from '../../services/geminiService';
 import ReactMarkdown from 'react-markdown';

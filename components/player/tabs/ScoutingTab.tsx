@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Player } from '../../../types';
 import { ContractIcon } from '../../icons/ContractIcon';

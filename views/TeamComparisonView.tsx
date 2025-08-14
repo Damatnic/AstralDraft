@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { useLeague } from '../hooks/useLeague';
 import ErrorDisplay from '../components/core/ErrorDisplay';

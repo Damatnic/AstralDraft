@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Player } from '../../types';
 import PlayerCard from './PlayerCard';
 import { motion, AnimatePresence } from 'framer-motion';

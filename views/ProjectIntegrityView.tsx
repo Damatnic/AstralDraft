@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 interface ProjectIntegrityViewProps {

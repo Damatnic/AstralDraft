@@ -4,7 +4,7 @@
  * Implements T2.1 League Management System requirements
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../../contexts/AppContext';
 import { Widget } from '../ui/Widget';

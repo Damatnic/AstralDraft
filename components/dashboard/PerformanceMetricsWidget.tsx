@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { Widget } from '../ui/Widget';
 import { ActivityIcon, TrophyIcon, UserIcon } from 'lucide-react'; // Assuming lucide-react is available or similar icons

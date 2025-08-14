@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Widget } from '../ui/Widget';
 import { TrophyIcon } from '../icons/TrophyIcon';
 import SparklineChart from '../ui/SparklineChart';

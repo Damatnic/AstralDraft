@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { DraftPick, Team } from '../../types';
 import { players } from '../../data/players';
 

@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, Player } from '../../types';
 import { Widget } from '../ui/Widget';
 import { InjuryIcon } from '../icons/InjuryIcon';

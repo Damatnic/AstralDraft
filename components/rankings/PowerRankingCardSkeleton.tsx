@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import SkeletonLoader from '../SkeletonLoader';
 
 const PowerRankingCardSkeleton: React.FC = () => {

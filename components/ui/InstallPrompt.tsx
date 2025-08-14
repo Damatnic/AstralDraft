@@ -3,7 +3,7 @@
  * Provides a user-friendly interface for app installation
  */
 
-import * as React from 'react';
+import React from 'react';
 import { usePWAInstall, useOfflineStatus, pwaUtils } from '../../utils/pwa';
 import { AccessibleButton } from './AccessibleButton';
 import './InstallPrompt.css';

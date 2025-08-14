@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { DndContext, closestCenter, DragEndEvent, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useAppState } from '../../contexts/AppContext';

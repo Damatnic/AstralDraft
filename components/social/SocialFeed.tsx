@@ -3,7 +3,7 @@
  * Enhanced activity stream with reactions, comments, and community interactions
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, Team, User, League } from '../../types';

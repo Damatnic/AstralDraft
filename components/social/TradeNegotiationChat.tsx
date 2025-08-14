@@ -3,7 +3,7 @@
  * Real-time chat system for trade discussions
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, Team, User } from '../../types';

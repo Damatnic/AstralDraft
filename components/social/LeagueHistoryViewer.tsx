@@ -3,7 +3,7 @@
  * Interactive timeline of league events, milestones, and memories
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, Team, User, League } from '../../types';

@@ -2,7 +2,7 @@
  * Main App Component - Full Fantasy Football Application with Oracle Integration
  */
 
-import * as React from 'react';
+import React from 'react';
 import { AppProvider, useAppState } from './contexts/AppContext';
 import { AuthProvider, AuthInitializer } from './contexts/AuthContext';
 import DashboardView from './views/DashboardView';

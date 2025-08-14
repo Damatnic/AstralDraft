@@ -3,7 +3,7 @@
  * Integrates MobileSearchInterface for player search functionality
  */
 
-import * as React from 'react';
+import React from 'react';
 import { Player } from '../../types';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import MobileSearchInterface from './MobileSearchInterface';

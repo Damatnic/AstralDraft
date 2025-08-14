@@ -3,7 +3,7 @@
  * Mobile-responsive dashboard with touch-friendly components
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { motion } from 'framer-motion';

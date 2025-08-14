@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import type { Badge } from '../../types';
 import { Widget } from '../ui/Widget';
 import { TrophyIcon } from '../icons/TrophyIcon';

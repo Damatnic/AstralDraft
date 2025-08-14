@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Brain } from 'lucide-react';
 import { Widget } from '../ui/Widget';

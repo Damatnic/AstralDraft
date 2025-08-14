@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { Player, PlayerNote, League } from '../../types';
 import Modal from '../ui/Modal';

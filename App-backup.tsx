@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import AstralDraftApp from './components/AstralDraftApp';
 import './styles/mobile-touch-targets.css';
 import './styles/mobile-form-optimization.css';

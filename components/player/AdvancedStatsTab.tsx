@@ -3,7 +3,7 @@
  * Comprehensive statistical analysis for player profiles
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, League } from '../../types';

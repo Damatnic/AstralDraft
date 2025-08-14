@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import type { WeeklyReportData } from '../../types';
 import { TrophyIcon } from '../icons/TrophyIcon';
 import { FlameIcon } from '../icons/FlameIcon';

@@ -1,7 +1,7 @@
 // Lazy Loading Implementation for Mobile Performance Optimization
 // Implements code splitting and lazy loading for mobile-specific components
 
-import * as React from 'react';
+import React from 'react';
 import { useResponsiveBreakpoint } from './mobileOptimizationUtils';
 
 /**

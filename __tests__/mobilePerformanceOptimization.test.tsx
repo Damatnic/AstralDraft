@@ -2,7 +2,7 @@ import { describe, it, expect, jest, beforeAll, beforeEach, afterEach } from '@j
 import { render, screen, waitFor } from '@testing-library/react';
 import { MobileCSSOptimizer } from '../utils/mobileCSSOptimizer';
 import { MobileLazyLoader, withMobileLazyLoading, useMobileLazyLoad } from '../utils/mobileLazyLoader';
-import * as React from 'react';
+import React from 'react';
 
 // Mock the mobile optimization utils
 jest.mock('../utils/mobileOptimizationUtils', () => ({

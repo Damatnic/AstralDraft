@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import Header from '../core/Header';
 import Breadcrumbs from '../core/Breadcrumbs';
 import MobileNavigation from './MobileNavigation';

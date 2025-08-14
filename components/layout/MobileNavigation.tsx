@@ -3,7 +3,7 @@
  * Provides accessible mobile navigation with proper touch targets
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloseIcon } from '../icons/CloseIcon';

@@ -3,7 +3,7 @@
  * Integrates real-time strategy adjustments, opponent modeling, and market analysis
  */
 
-import * as React from 'react';
+import React from 'react';
 import { Player, Team, League } from '../types';
 import EnhancedDraftSimulationEngine, { 
     PickRecommendation, 

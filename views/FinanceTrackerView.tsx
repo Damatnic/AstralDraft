@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useLeague } from '../hooks/useLeague';
 import { Widget } from '../components/ui/Widget';
 import ErrorDisplay from '../components/core/ErrorDisplay';

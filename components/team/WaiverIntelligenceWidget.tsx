@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { League, WaiverIntelligence } from '../../types';
 import { Widget } from '../ui/Widget';
 import { getWaiverIntelligence } from '../../services/geminiService';

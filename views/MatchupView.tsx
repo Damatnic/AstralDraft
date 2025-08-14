@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import MatchupScoreboard from '../components/matchup/MatchupScoreboard';

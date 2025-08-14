@@ -3,7 +3,7 @@
  * Monitors Web Vitals and performance metrics for mobile optimization
  */
 
-import * as React from 'react';
+import React from 'react';
 
 // Web Vitals types (define locally since package may not be installed)
 interface WebVitalMetric {

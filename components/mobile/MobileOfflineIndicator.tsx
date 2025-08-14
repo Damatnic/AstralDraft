@@ -3,7 +3,7 @@
  * Shows offline status and sync progress for mobile users
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mobileOfflineService } from '../../services/mobileOfflineService';
 import { useMediaQuery } from '../../hooks/useMediaQuery';

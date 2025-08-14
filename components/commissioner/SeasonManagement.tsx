@@ -3,7 +3,7 @@
  * Advanced season administration and control panel
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { CalendarIcon } from '../icons/CalendarIcon';

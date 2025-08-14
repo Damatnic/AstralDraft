@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { League, Team, Player } from '../../types';
 import { players } from '../../data/players';

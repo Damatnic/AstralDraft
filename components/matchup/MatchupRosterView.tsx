@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, MatchupTeam, MatchupPlayer, GamedayEvent } from '../../types';
 import { Widget } from '../ui/Widget';
 import PlayerRow from './PlayerRow';

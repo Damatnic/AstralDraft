@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { SeasonReviewData, Team } from '../../types';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { ChartBarIcon } from '../icons/ChartBarIcon';

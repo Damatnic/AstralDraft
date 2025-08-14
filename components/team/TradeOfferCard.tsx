@@ -3,7 +3,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { TradeOffer, League, Player, DraftPickAsset } from '../../types';
 import { players } from '../../data/players';
 import { ArrowRightLeftIcon } from '../icons/ArrowRightLeftIcon';

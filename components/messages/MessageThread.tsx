@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { Avatar } from '../ui/Avatar';
 import { SendIcon } from '../icons/SendIcon';

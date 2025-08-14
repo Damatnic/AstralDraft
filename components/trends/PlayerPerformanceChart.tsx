@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Player, League } from '../../types';
 import Tooltip from '../ui/Tooltip';
 

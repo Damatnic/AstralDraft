@@ -3,7 +3,7 @@
  * Shows rankings, achievements, and performance using oracleScoringService
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../components/ui/Widget';

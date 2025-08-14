@@ -3,7 +3,7 @@
  * Compact analytics view optimized for mobile devices with touch interactions
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Player, Team } from '../../types';
 import { useMediaQuery } from '../../hooks/useMediaQuery';

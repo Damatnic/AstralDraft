@@ -1,7 +1,7 @@
 // Mobile Form Enhancement Utility
 // Automatically enhances form inputs with proper attributes for mobile usability
 
-import * as React from 'react';
+import React from 'react';
 
 export interface FormEnhancementOptions {
   enableAutocomplete?: boolean;

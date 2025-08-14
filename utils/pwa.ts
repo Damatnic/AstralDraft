@@ -3,7 +3,7 @@
  * Handles app installation prompts, offline detection, and PWA features
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useAnnouncer } from './accessibility';
 
 interface BeforeInstallPromptEvent extends Event {

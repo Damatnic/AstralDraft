@@ -3,7 +3,7 @@
  * Comprehensive league configuration management
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { XIcon } from '../icons/XIcon';

@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAppState } from '../../contexts/AppContext';
 import Notification from './Notification';

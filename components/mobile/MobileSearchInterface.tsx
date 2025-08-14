@@ -3,7 +3,7 @@
  * Touch-optimized search with filters and quick actions for mobile devices
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Player, PlayerPosition } from '../../types';
 import { useMediaQuery } from '../../hooks/useMediaQuery';

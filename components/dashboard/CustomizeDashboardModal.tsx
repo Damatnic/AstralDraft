@@ -3,7 +3,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion, Reorder } from 'framer-motion';
 import Modal from '../ui/Modal';
 import { useAppState } from '../../contexts/AppContext';

@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, PlayerPosition } from '../../types';
 import { UserIcon } from '../icons/UserIcon';
 

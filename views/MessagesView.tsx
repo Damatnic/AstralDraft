@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { MailIcon } from '../components/icons/MailIcon';
 import ConversationList from '../components/messages/ConversationList';

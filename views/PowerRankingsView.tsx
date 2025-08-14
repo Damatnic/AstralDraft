@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { generatePowerRankings } from '../services/geminiService';
 import type { League, PowerRanking } from '../types';

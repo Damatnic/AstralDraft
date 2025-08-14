@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 
 interface SparklineChartProps {
     data: number[];

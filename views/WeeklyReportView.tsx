@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { generateWeeklyReport, generateWeeklyPowerPlay } from '../services/geminiService';
 import type { League, WeeklyReportData } from '../types';

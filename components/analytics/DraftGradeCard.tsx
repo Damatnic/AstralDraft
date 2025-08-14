@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, DraftGrade, League } from '../../types';
 import { generateDraftGrade } from '../../services/geminiService';
 import LoadingSpinner from '../ui/LoadingSpinner';

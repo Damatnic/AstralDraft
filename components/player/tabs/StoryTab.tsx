@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Player, League, PlayerStory } from '../../../types';
 import { generatePlayerStory } from '../../../services/geminiService';

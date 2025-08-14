@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Widget } from '../ui/Widget';
 import { TelescopeIcon } from '../icons/TelescopeIcon';
 import { generateSeasonOutlook } from '../../services/geminiService';

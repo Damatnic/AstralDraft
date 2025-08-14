@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Player } from '../../types';
 import Modal from '../ui/Modal';
 

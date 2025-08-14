@@ -3,7 +3,7 @@
  * Rich narrative creation tools for team stories and experiences
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, Team, User } from '../../types';

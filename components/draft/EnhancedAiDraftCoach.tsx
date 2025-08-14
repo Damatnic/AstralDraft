@@ -3,7 +3,7 @@
  * Advanced real-time coaching with strategy adjustments and market analysis
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, League, Team } from '../../types';

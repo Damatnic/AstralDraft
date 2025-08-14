@@ -3,7 +3,7 @@
  * Historical performance analysis and trending data
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { Player, League } from '../../types';

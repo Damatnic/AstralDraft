@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Team, Player, TradeAnalysis, DraftPickAsset, TradeSuggestion } from '../../types';
 import { players } from '../../data/players';

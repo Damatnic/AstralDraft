@@ -2,7 +2,7 @@
  * Standardized navigation components for consistent UX across views
  */
 
-import * as React from 'react';
+import React from 'react';
 import { 
   createNavigationHandler, 
   createBackHandler, 

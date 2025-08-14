@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Team, DraftPick, Player } from '../../types';
 import { players } from '../../data/players';

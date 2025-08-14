@@ -3,7 +3,7 @@
  * Provides responsive layout structure and mobile-specific navigation
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import MobileBottomNavigation from './MobileBottomNavigation';

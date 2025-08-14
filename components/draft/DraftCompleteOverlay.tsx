@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { League } from '../../types';
 import { PartyPopperIcon } from '../icons/PartyPopperIcon';

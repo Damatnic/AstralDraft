@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { motion } from 'framer-motion';
 import { Avatar } from '../ui/Avatar';

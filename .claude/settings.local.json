@@ -11,7 +11,10 @@
       "Bash(git push:*)",
       "Bash(grep:*)",
       "Bash(node:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npx @iarna/toml:*)",
+      "Bash(find:*)",
+      "Bash(timeout 30s npm run dev)"
     ],
     "deny": [],
     "ask": [],

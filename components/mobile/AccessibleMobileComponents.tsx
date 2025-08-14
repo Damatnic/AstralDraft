@@ -3,7 +3,7 @@
  * Enhanced mobile components with full accessibility support
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import {
     announceToScreenReader,

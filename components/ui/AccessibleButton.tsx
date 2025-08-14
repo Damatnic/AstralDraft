@@ -3,7 +3,7 @@
  * Enhanced with proper ARIA attributes, keyboard navigation, and mobile touch targets
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { getButtonA11yProps, useAnnouncer } from '../../utils/accessibility';
 

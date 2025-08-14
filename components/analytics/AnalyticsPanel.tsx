@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Analytics } from '../../types';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import { ZapIcon } from '../icons/ZapIcon';

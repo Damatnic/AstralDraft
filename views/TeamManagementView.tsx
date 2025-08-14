@@ -3,7 +3,7 @@
  * Advanced roster editing, lineup optimization, and player transaction history
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../contexts/AppContext';
 import { useLeague } from '../hooks/useLeague';

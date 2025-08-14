@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { LeagueSettings, User } from '../../types';
 import Modal from '../ui/Modal';
 import { motion } from 'framer-motion';

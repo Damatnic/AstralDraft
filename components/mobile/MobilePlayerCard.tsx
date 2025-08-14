@@ -3,7 +3,7 @@
  * Touch-optimized player cards with swipe actions and condensed information
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { Player } from '../../types';
 import { 

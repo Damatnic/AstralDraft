@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Team, Player, League, ChampionshipOddsSimulation } from '../../types';
 import { players } from '../../data/players';

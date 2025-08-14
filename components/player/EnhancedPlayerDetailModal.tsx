@@ -3,7 +3,7 @@
  * Updated modal to use the new PlayerProfileView for comprehensive player information
  */
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { Player, League } from '../../types';
 import Modal from '../ui/Modal';

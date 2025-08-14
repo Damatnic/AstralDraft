@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppState } from '../../contexts/AppContext';
 import { Widget } from '../ui/Widget';

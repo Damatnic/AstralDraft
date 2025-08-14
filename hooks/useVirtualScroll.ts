@@ -3,7 +3,7 @@
  * Optimized virtual scrolling for large lists on mobile devices
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useOptimizedScroll } from '../utils/mobilePerformanceUtils';
 
 interface VirtualScrollOptions {

@@ -3,7 +3,7 @@
  * React hook for managing offline functionality in mobile components
  */
 
-import * as React from 'react';
+import React from 'react';
 import { mobileOfflineService } from '../services/mobileOfflineService';
 import { Player, Team, League } from '../types';
 

@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import type { League, DraftRecapData } from '../../types';
 import { generateDraftRecap } from '../../services/geminiService';
 import { TrophyIcon } from '../icons/TrophyIcon';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import type { League } from '../types';
 import { players } from '../data/players';

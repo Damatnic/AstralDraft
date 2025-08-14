@@ -3,7 +3,7 @@
  * Provides focus trapping, ARIA management, and keyboard navigation support
  */
 
-import * as React from 'react';
+import React from 'react';
 
 /**
  * Get all focusable elements within a container

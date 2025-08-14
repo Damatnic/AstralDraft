@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { liveDataService } from '../services/liveDataService';
 import type { League, Team, GamedayEvent, LiveNewsItem } from '../types';

@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { generateDraftStoryHighlights } from '../services/geminiService';
 import type { League, DraftEvent, Player, Team } from '../types';

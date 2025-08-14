@@ -3,7 +3,7 @@
  * Long-term team impact analysis with projections and trends
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import { League, Team } from '../../types';

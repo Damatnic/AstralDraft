@@ -3,7 +3,7 @@
  * Comprehensive accessibility tools and helpers for mobile components
  */
 
-import * as React from 'react';
+import React from 'react';
 
 // ARIA live region types
 export type LiveRegionPoliteness = 'off' | 'polite' | 'assertive';

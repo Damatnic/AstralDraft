@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Team } from '../../types';
 import { Widget } from '../ui/Widget';
 import { Avatar } from '../ui/Avatar';

@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Player, Team, AuctionState } from '../../types';
 import Tooltip from '../ui/Tooltip';
 import { Avatar } from '../ui/Avatar';

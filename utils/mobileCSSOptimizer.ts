@@ -163,6 +163,6 @@ export class MobileCSSOptimizer {
 }
 
 // React import for lazy loading
-import * as React from 'react';
+import React from 'react';
 
 export default MobileCSSOptimizer;

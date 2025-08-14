@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NewspaperIcon } from '../icons/NewspaperIcon';
 import { useLiveData } from '../../hooks/useLiveData';

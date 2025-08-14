@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { LeagueHistoryEntry, Team } from '../../types';
 import { Avatar } from '../ui/Avatar';

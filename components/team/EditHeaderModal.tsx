@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import Modal from '../ui/Modal';
 import { ImageIcon } from '../icons/ImageIcon';

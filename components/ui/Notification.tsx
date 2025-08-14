@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { NotificationType } from '../../types';
 import { CheckIcon } from '../icons/CheckIcon';

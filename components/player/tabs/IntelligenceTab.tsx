@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Player, NewsItem } from '../../../types';
 import { NewsIcon } from '../../icons/NewsIcon';

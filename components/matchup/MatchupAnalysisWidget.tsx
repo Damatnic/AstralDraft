@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, MatchupAnalysis } from '../../types';
 import { getMatchupAnalysis } from '../../services/geminiService';
 import { PercentIcon } from '../icons/PercentIcon';

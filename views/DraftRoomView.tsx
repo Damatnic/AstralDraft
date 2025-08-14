@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { useAppState } from '../contexts/AppContext';
 

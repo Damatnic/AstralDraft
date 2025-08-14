@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import type { MatchupPlayer, GamedayEvent } from '../../types';
 import AnimatedNumber from '../ui/AnimatedNumber';

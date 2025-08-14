@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useLeague } from '../../hooks/useLeague';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BotMessageSquareIcon } from '../icons/BotMessageSquareIcon';

@@ -2,7 +2,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { PowerRanking, Team } from '../../types';
 import { motion } from 'framer-motion';
 import { ArrowUpIcon } from '../icons/ArrowUpIcon';

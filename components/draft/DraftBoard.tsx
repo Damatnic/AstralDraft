@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, DraftPick, Player } from '../../types';
 import TeamColumn from './TeamColumn';
 import { useAppState } from '../../contexts/AppContext';

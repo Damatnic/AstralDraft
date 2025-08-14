@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import type { League, Team, Player, User, AuctionState } from '../types';
 import { getAiNomination, getAiBid } from '../services/geminiService';
 import { players } from '../data/players';

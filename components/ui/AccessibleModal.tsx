@@ -3,7 +3,7 @@
  * Enhanced with focus management, keyboard navigation, and mobile accessibility
  */
 
-import * as React from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   useFocusTrap, 

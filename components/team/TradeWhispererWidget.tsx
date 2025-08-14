@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useLeague } from '../../hooks/useLeague';
 import { Widget } from '../ui/Widget';
 import { MessageCircleIcon } from '../icons/MessageCircleIcon';

@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import type { League, Team } from '../../types';
 import { generateTeamNeedsAnalysis } from '../../services/geminiService';
 import { Widget } from '../ui/Widget';

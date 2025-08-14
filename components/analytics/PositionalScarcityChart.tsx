@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Player, PlayerPosition } from '../../types';
 import { players as allPlayers } from '../../data/players';
 import Tooltip from '../ui/Tooltip';

@@ -1,7 +1,7 @@
 
 
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../contexts/AppContext';
 import { streamAssistantResponse } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';

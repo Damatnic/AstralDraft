@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 
 export const useMediaQuery = (query: string): boolean => {
     const getMatches = (query: string): boolean => {

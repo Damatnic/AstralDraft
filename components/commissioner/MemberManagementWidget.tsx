@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import type { League, User } from '../../types';
 import { Widget } from '../ui/Widget';

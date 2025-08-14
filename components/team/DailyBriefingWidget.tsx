@@ -1,6 +1,6 @@
 
 
-import * as React from 'react';
+import React from 'react';
 import type { Team, League, DailyBriefingItem, AiLineupSuggestion, Player } from '../../types';
 import { Widget } from '../ui/Widget';
 import { SparklesIcon } from '../icons/SparklesIcon';

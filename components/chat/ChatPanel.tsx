@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { formatRelativeTime } from '../../utils/time';
 import { generateTrashTalk } from '../../services/geminiService';

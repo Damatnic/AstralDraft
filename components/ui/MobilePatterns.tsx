@@ -3,7 +3,7 @@
  * Bottom sheets, swipe gestures, and mobile-first navigation components
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { AccessibleButton } from './AccessibleButton';
 import { useFocusTrap } from '../../utils/accessibility';

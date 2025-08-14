@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import type { Team, League, PlayerAwardType, Player } from '../../types';
 import Modal from '../ui/Modal';

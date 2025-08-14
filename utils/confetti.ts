@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 const confettiCount = 150;
 const gravity = 0.98;

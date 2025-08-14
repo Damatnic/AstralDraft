@@ -3,7 +3,7 @@
  * Enhanced mobile and desktop keyboard navigation support
  */
 
-import * as React from 'react';
+import React from 'react';
 import { KEYBOARD_KEYS } from './accessibility';
 
 export interface KeyboardNavigationOptions {

@@ -3,7 +3,7 @@
  * Optimized components for rendering large lists and grids on mobile
  */
 
-import * as React from 'react';
+import React from 'react';
 import { useVirtualScroll } from '../../hooks/useVirtualScroll';
 import { useOptimizedScroll } from '../../utils/mobilePerformanceUtils';
 

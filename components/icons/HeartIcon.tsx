@@ -3,7 +3,7 @@
  * Used for favorites and liking content
  */
 
-import * as React from 'react';
+import React from 'react';
 
 interface HeartIconProps {
     className?: string;

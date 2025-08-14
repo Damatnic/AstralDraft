@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Reorder } from 'framer-motion';
 import type { Player } from '../../types';
 import { players } from '../../data/players';
