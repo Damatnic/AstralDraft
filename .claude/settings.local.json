@@ -14,7 +14,8 @@
       "Bash(npm ls:*)",
       "Bash(npx @iarna/toml:*)",
       "Bash(find:*)",
-      "Bash(timeout 30s npm run dev)"
+      "Bash(timeout 30s npm run dev)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": [],

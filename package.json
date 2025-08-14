@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "vite --port 8765",
     "dev:oracle": "vite --port 8765 --open",
-    "build": "vite build",
-    "build:prod": "NODE_ENV=production vite build",
+    "build": "vite build --mode production",
+    "build:prod": "vite build --mode production",
     "build:analyze": "vite build --mode analyze && npx rollup-plugin-visualizer dist --open",
     "preview": "vite preview",
     "start": "vite",

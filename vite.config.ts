@@ -7,7 +7,10 @@ export default defineConfig(({ mode }) => {
     const isProduction = mode === 'production';
     
     const getVendorChunk = (id: string) => {
-      if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+      // Keep React and ReactDOM together - CRITICAL for proper React functionality
+      if (id.includes('react') || id.includes('react-dom')) {
+        return 'vendor-react';
+      }
       if (id.includes('framer-motion')) return 'vendor-framer';
       if (id.includes('lucide-react')) return 'vendor-icons';
       if (id.includes('@dnd-kit')) return 'vendor-dnd';
@@ -48,13 +51,31 @@ export default defineConfig(({ mode }) => {
     
     return {
       plugins: [
-        react()
+        react(),
+        // Copy service worker to dist folder
+        {
+          name: 'copy-sw',
+          writeBundle() {
+            const fs = require('fs');
+            const path = require('path');
+            try {
+              fs.copyFileSync(
+                path.resolve(__dirname, 'sw.js'),
+                path.resolve(__dirname, 'dist/sw.js')
+              );
+              console.log('✓ Service worker copied to dist/sw.js');
+            } catch (error) {
+              console.warn('⚠ Failed to copy service worker:', error.message);
+            }
+          }
+        }
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
         'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
-        global: 'globalThis',
+        'global': 'globalThis',
+        'globalThis': 'globalThis',
         // Environment-specific optimizations
         'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
         '__DEV__': JSON.stringify(!isProduction),
@@ -72,7 +93,9 @@ export default defineConfig(({ mode }) => {
           '@services': path.resolve(__dirname, 'services'),
           '@hooks': path.resolve(__dirname, 'hooks'),
           '@utils': path.resolve(__dirname, 'utils'),
-          '@types': path.resolve(__dirname, 'types.ts')
+          '@types': path.resolve(__dirname, 'types.ts'),
+          // Additional polyfills
+          buffer: 'buffer'
         }
       },
       build: {
@@ -86,19 +109,51 @@ export default defineConfig(({ mode }) => {
         chunkSizeWarningLimit: 1000,
         rollupOptions: {
           output: {
-            // Advanced chunk splitting strategy
-            manualChunks: getManualChunks,
+            // Improved chunk splitting strategy
+            manualChunks: (id: string) => {
+              if (id.includes('node_modules')) {
+                // Critical: Keep React ecosystem together
+                if (id.includes('react') || id.includes('react-dom')) {
+                  return 'vendor-react';
+                }
+                // Group other vendors
+                if (id.includes('framer-motion')) return 'vendor-framer';
+                if (id.includes('lucide-react')) return 'vendor-icons';
+                if (id.includes('@dnd-kit')) return 'vendor-dnd';
+                if (id.includes('recharts')) return 'vendor-recharts';
+                if (id.includes('chart.js') || id.includes('react-chartjs')) return 'vendor-chartjs';
+                if (id.includes('d3')) return 'vendor-d3';
+                if (id.includes('lodash')) return 'vendor-lodash';
+                if (id.includes('date-fns')) return 'vendor-date';
+                if (id.includes('axios')) return 'vendor-http';
+                if (id.includes('@google/genai') || id.includes('genai')) return 'vendor-ai';
+                return 'vendor-misc';
+              }
+              // App code chunking
+              if (id.includes('/components/oracle/') || id.includes('/services/oracle')) return 'feature-oracle';
+              if (id.includes('/components/draft/') || id.includes('/hooks/useDraft') || id.includes('/hooks/useSnake') || id.includes('/hooks/useAuction')) return 'feature-draft';
+              if (id.includes('/components/analytics/') || id.includes('/components/reports/') || id.includes('/hooks/useHistorical')) return 'feature-analytics';
+              if (id.includes('/components/manager/') || id.includes('/components/team/') || id.includes('/components/commissioner/')) return 'feature-management';
+              if (id.includes('/services/') && !id.includes('/services/oracle')) return 'app-services';
+              return null;
+            },
             // File naming strategy for caching
             entryFileNames: 'assets/[name]-[hash].js',
             chunkFileNames: 'assets/[name]-[hash].js',
-            assetFileNames: 'assets/[name]-[hash].[ext]'
+            assetFileNames: 'assets/[name]-[hash].[ext]',
+            // Ensure proper globals for React
+            globals: {
+              'react': 'React',
+              'react-dom': 'ReactDOM'
+            }
           },
-          // External dependencies optimization  
+          // Never externalize React in production - it must be bundled
           external: isProduction ? [] : ['@types/node'],
           onwarn(warning, warn) {
             // Suppress specific warnings during build
             if (warning.code === 'UNRESOLVED_IMPORT') return;
             if (warning.code === 'THIS_IS_UNDEFINED') return;
+            if (warning.code === 'CIRCULAR_DEPENDENCY') return;
             warn(warning);
           }
         },
@@ -106,6 +161,8 @@ export default defineConfig(({ mode }) => {
         assetsInlineLimit: 2048, // Reduced for better caching
         // CSS code splitting
         cssCodeSplit: true,
+        // Browser compatibility
+        modulePreload: { polyfill: true },
         // Report compressed file sizes
         reportCompressedSize: true,
         // Cleanup output directory
@@ -116,6 +173,8 @@ export default defineConfig(({ mode }) => {
         include: [
           'react',
           'react-dom',
+          'react-dom/client',
+          'react/jsx-runtime',
           'framer-motion',
           'lucide-react',
           'recharts',
@@ -123,7 +182,9 @@ export default defineConfig(({ mode }) => {
           '@dnd-kit/sortable'
         ],
         // Exclude problematic dependencies
-        exclude: ['@types/node']
+        exclude: ['@types/node'],
+        // Force React dependencies to be optimized together
+        force: true
       },
       // Enhanced caching strategy
       cacheDir: 'node_modules/.vite',
