@@ -3,26 +3,32 @@
  * Comprehensive tests for Oracle prediction endpoints
  */
 
+import { ApiTestClient, testData, HttpStatus, setupTestDatabase, cleanupTestDatabase } from './setup';
 import app from '../../backend/server';
-import { ApiTestClient, setupTestDatabase, cleanupTestDatabase, testData, HttpStatus } from './setup';
 
 describe('Oracle API', () => {
   let client: ApiTestClient;
-  let authHeaders: Record<string, string>;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await setupTestDatabase();
     client = new ApiTestClient(app);
-    authHeaders = await client.authenticateUser();
+    // Register and authenticate a user for each test
+    await client.post('/api/auth/register', {
+      username: 'testuser',
+      email: 'testuser@example.com',
+      password: 'TestPassword123!',
+      displayName: 'Test User'
+    });
+    await client.authenticateUser('testuser', 'TestPassword123!');
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await cleanupTestDatabase();
   });
 
   describe('GET /api/oracle/predictions', () => {
     it('should retrieve user predictions successfully', async () => {
-      const response = await client.get('/api/oracle/predictions', authHeaders);
+      const response = await client.get('/api/oracle/predictions');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -31,7 +37,7 @@ describe('Oracle API', () => {
     });
 
     it('should support pagination parameters', async () => {
-      const response = await client.get('/api/oracle/predictions?page=1&limit=10', authHeaders);
+      const response = await client.get('/api/oracle/predictions?page=1&limit=10');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('predictions');
@@ -41,7 +47,7 @@ describe('Oracle API', () => {
     });
 
     it('should filter predictions by status', async () => {
-      const response = await client.get('/api/oracle/predictions?status=pending', authHeaders);
+      const response = await client.get('/api/oracle/predictions?status=pending');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('predictions');
@@ -56,7 +62,7 @@ describe('Oracle API', () => {
 
   describe('POST /api/oracle/predictions', () => {
     it('should create prediction successfully', async () => {
-      const response = await client.post('/api/oracle/predictions', testData.validPrediction, authHeaders);
+      const response = await client.post('/api/oracle/predictions', testData.validPrediction);
 
       expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body).toHaveProperty('success', true);
@@ -69,7 +75,7 @@ describe('Oracle API', () => {
       const response = await client.post('/api/oracle/predictions', {
         gameId: testData.validPrediction.gameId
         // Missing homeScore, awayScore, confidence
-      }, authHeaders);
+      });
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -82,7 +88,7 @@ describe('Oracle API', () => {
         confidence: 150 // Invalid: > 100
       };
 
-      const response = await client.post('/api/oracle/predictions', invalidPrediction, authHeaders);
+      const response = await client.post('/api/oracle/predictions', invalidPrediction);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -94,7 +100,7 @@ describe('Oracle API', () => {
         homeScore: -5 // Invalid: negative score
       };
 
-      const response = await client.post('/api/oracle/predictions', invalidPrediction, authHeaders);
+      const response = await client.post('/api/oracle/predictions', invalidPrediction);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -102,10 +108,10 @@ describe('Oracle API', () => {
 
     it('should prevent duplicate predictions for same game', async () => {
       // Create first prediction
-      await client.post('/api/oracle/predictions', testData.validPrediction, authHeaders);
+      await client.post('/api/oracle/predictions', testData.validPrediction);
 
       // Try to create duplicate
-      const response = await client.post('/api/oracle/predictions', testData.validPrediction, authHeaders);
+      const response = await client.post('/api/oracle/predictions', testData.validPrediction);
 
       expect(response.status).toBe(HttpStatus.CONFLICT);
       expect(response.body).toHaveProperty('success', false);
@@ -125,12 +131,13 @@ describe('Oracle API', () => {
       const createResponse = await client.post('/api/oracle/predictions', {
         ...testData.validPrediction,
         gameId: `game-${Date.now()}` // Ensure unique game ID
-      }, authHeaders);
+      });
+      expect(createResponse.status).toBe(HttpStatus.CREATED);
       predictionId = createResponse.body.prediction.id;
     });
 
     it('should retrieve specific prediction successfully', async () => {
-      const response = await client.get(`/api/oracle/predictions/${predictionId}`, authHeaders);
+      const response = await client.get(`/api/oracle/predictions/${predictionId}`);
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -139,7 +146,7 @@ describe('Oracle API', () => {
     });
 
     it('should return 404 for non-existent prediction', async () => {
-      const response = await client.get('/api/oracle/predictions/non-existent-id', authHeaders);
+      const response = await client.get('/api/oracle/predictions/non-existent-id');
 
       expect(response.status).toBe(HttpStatus.NOT_FOUND);
       expect(response.body).toHaveProperty('success', false);
@@ -159,7 +166,8 @@ describe('Oracle API', () => {
       const createResponse = await client.post('/api/oracle/predictions', {
         ...testData.validPrediction,
         gameId: `game-${Date.now()}`
-      }, authHeaders);
+      });
+      expect(createResponse.status).toBe(HttpStatus.CREATED);
       predictionId = createResponse.body.prediction.id;
     });
 
@@ -171,7 +179,7 @@ describe('Oracle API', () => {
         reasoning: 'Updated analysis shows stronger home team advantage'
       };
 
-      const response = await client.put(`/api/oracle/predictions/${predictionId}`, updatedData, authHeaders);
+      const response = await client.put(`/api/oracle/predictions/${predictionId}`, updatedData);
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -184,7 +192,7 @@ describe('Oracle API', () => {
         confidence: 200 // Invalid: > 100
       };
 
-      const response = await client.put(`/api/oracle/predictions/${predictionId}`, invalidUpdate, authHeaders);
+      const response = await client.put(`/api/oracle/predictions/${predictionId}`, invalidUpdate);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -193,7 +201,7 @@ describe('Oracle API', () => {
     it('should return 404 for non-existent prediction', async () => {
       const response = await client.put('/api/oracle/predictions/non-existent-id', {
         confidence: 85
-      }, authHeaders);
+      });
 
       expect(response.status).toBe(HttpStatus.NOT_FOUND);
     });
@@ -214,19 +222,20 @@ describe('Oracle API', () => {
       const createResponse = await client.post('/api/oracle/predictions', {
         ...testData.validPrediction,
         gameId: `game-${Date.now()}`
-      }, authHeaders);
+      });
+      expect(createResponse.status).toBe(HttpStatus.CREATED);
       predictionId = createResponse.body.prediction.id;
     });
 
     it('should delete prediction successfully', async () => {
-      const response = await client.delete(`/api/oracle/predictions/${predictionId}`, authHeaders);
+      const response = await client.delete(`/api/oracle/predictions/${predictionId}`);
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
     });
 
     it('should return 404 for non-existent prediction', async () => {
-      const response = await client.delete('/api/oracle/predictions/non-existent-id', authHeaders);
+      const response = await client.delete('/api/oracle/predictions/non-existent-id');
 
       expect(response.status).toBe(HttpStatus.NOT_FOUND);
     });
@@ -240,7 +249,7 @@ describe('Oracle API', () => {
 
   describe('GET /api/oracle/leaderboard', () => {
     it('should retrieve global leaderboard successfully', async () => {
-      const response = await client.get('/api/oracle/leaderboard', authHeaders);
+      const response = await client.get('/api/oracle/leaderboard');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -249,14 +258,14 @@ describe('Oracle API', () => {
     });
 
     it('should support leaderboard filtering by timeframe', async () => {
-      const response = await client.get('/api/oracle/leaderboard?timeframe=weekly', authHeaders);
+      const response = await client.get('/api/oracle/leaderboard?timeframe=weekly');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('leaderboard');
     });
 
     it('should include user rankings in leaderboard', async () => {
-      const response = await client.get('/api/oracle/leaderboard', authHeaders);
+      const response = await client.get('/api/oracle/leaderboard');
 
       expect(response.status).toBe(HttpStatus.OK);
       if (response.body.leaderboard.length > 0) {
@@ -269,7 +278,7 @@ describe('Oracle API', () => {
 
   describe('GET /api/oracle/accuracy', () => {
     it('should retrieve user accuracy metrics', async () => {
-      const response = await client.get('/api/oracle/accuracy', authHeaders);
+      const response = await client.get('/api/oracle/accuracy');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -279,7 +288,7 @@ describe('Oracle API', () => {
     });
 
     it('should support accuracy filtering by timeframe', async () => {
-      const response = await client.get('/api/oracle/accuracy?timeframe=monthly', authHeaders);
+      const response = await client.get('/api/oracle/accuracy?timeframe=monthly');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('accuracy');
@@ -295,8 +304,8 @@ describe('Oracle API', () => {
   describe('Oracle API Error Handling', () => {
     it('should handle database errors gracefully', async () => {
       // This test would mock database errors
-      const response = await client.get('/api/oracle/predictions', authHeaders);
-      
+      const response = await client.get('/api/oracle/predictions');
+
       // Should either succeed or return proper error format
       if (response.status !== HttpStatus.OK) {
         expect(response.body).toHaveProperty('success', false);
@@ -305,17 +314,18 @@ describe('Oracle API', () => {
     });
 
     it('should validate content type for POST requests', async () => {
-      const response = await client.post('/api/oracle/predictions', testData.validPrediction, {
-        ...authHeaders,
-        'Content-Type': 'text/plain'
-      });
+      const response = await client.post(
+        '/api/oracle/predictions',
+        testData.validPrediction,
+        { 'Content-Type': 'text/plain' }
+      );
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
     });
 
     it('should handle malformed JSON gracefully', async () => {
       // This would test malformed JSON handling
-      const response = await client.post('/api/oracle/predictions', 'invalid-json', authHeaders);
+      const response = await client.post('/api/oracle/predictions', 'invalid-json');
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
     });

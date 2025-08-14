@@ -16,6 +16,7 @@ import EnsembleMLWidget from '../components/oracle/EnsembleMLWidget';
 import TrainingDataManager from '../components/oracle/TrainingDataManager';
 import OracleRealTimePredictionInterface from '../components/oracle/OracleRealTimePredictionInterface';
 import OracleLeaderboard from '../components/oracle/OracleLeaderboard';
+import { useResponsiveBreakpoint, useMobileFixedPosition, useMobileModalClasses } from '../utils/mobileOptimizationUtils';
 
 interface OracleChallenge {
     id: string;
@@ -196,6 +197,10 @@ const LeaderboardEntry: React.FC<{
 
 const BeatTheOracleView: React.FC = () => {
     const { state } = useAppState();
+    const { isMobile } = useResponsiveBreakpoint();
+    const modalClasses = useMobileModalClasses();
+    const notificationPosition = useMobileFixedPosition('corner');
+    
     const [userStats, setUserStats] = React.useState<UserStats>({
         totalChallenges: 0,
         wins: 0,
@@ -380,105 +385,107 @@ const BeatTheOracleView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
             {/* Header */}
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center"
             >
-                <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 flex items-center justify-center gap-2">
                     <ZapIcon className="text-yellow-400" />
                     Beat The Oracle
                 </h1>
-                <p className="text-gray-400">
+                <p className="text-sm sm:text-base text-gray-400">
                     Challenge the AI Oracle with your fantasy football predictions
                 </p>
             </motion.div>
 
             {/* Tab Navigation */}
-            <div className="flex justify-center">
-                <div className="bg-gray-800/50 rounded-lg p-1 flex space-x-1">
-                    <button
-                        onClick={() => setActiveTab('challenges')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'challenges'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        Oracle Challenges
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('analytics')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'analytics'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        Analytics Dashboard
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('rewards')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'rewards'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        Rewards & Achievements
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('social')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'social'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        Social Features
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('ml-analytics')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'ml-analytics'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        🤖 ML Analytics
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('training')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'training'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        🎯 Training
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('realtime')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'realtime'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        ⚡ Real-Time Predictions
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('leaderboard')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                            activeTab === 'leaderboard'
-                                ? 'bg-blue-500 text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                        }`}
-                    >
-                        🏆 Leaderboard
-                    </button>
+            <div className="w-full overflow-x-auto">
+                <div className="flex space-x-2 sm:space-x-1 pb-2 px-4 sm:px-0 min-w-max sm:min-w-0 sm:justify-center">
+                    <div className="bg-gray-800/50 rounded-lg p-1 flex space-x-1 min-w-max">
+                        <button
+                            onClick={() => setActiveTab('challenges')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'challenges'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            Oracle Challenges
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('analytics')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'analytics'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            Analytics
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('rewards')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'rewards'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            Rewards
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('social')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'social'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            Social
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('ml-analytics')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'ml-analytics'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            🤖 ML
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('training')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'training'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            🎯 Training
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('realtime')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'realtime'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            ⚡ Real-Time
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('leaderboard')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all mobile-touch-target whitespace-nowrap ${
+                                activeTab === 'leaderboard'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                            }`}
+                        >
+                            🏆 Leaderboard
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -486,7 +493,7 @@ const BeatTheOracleView: React.FC = () => {
             {activeTab === 'challenges' ? (
                 <>
                     {/* User Stats Dashboard */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                         <Widget title="Win Rate" className="bg-green-500/10">
                             <div className="text-2xl font-bold text-green-400">
                                 {(userStats.winRate * 100).toFixed(1)}%
@@ -525,7 +532,7 @@ const BeatTheOracleView: React.FC = () => {
                     </div>
 
                     {/* Main Content Area with Challenges and ML Widget */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Left Side - Active Challenges */}
                         <div className="lg:col-span-2">
                             <Widget title="Weekly Challenges" className="bg-gray-900/50">
@@ -547,7 +554,7 @@ const BeatTheOracleView: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                                         <ChallengeOptions 
                                             challenge={challenge}
                                             onSelectOption={handleSelectOption}
@@ -679,7 +686,7 @@ const BeatTheOracleView: React.FC = () => {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 50 }}
-                    className="fixed bottom-4 right-4 bg-gray-800 border border-gray-600 rounded-lg p-4 max-w-sm z-50"
+                    className={`${notificationPosition} bg-gray-800 border border-gray-600 rounded-lg p-4 ${isMobile ? 'w-full mx-4' : 'max-w-sm'}`}
                 >
                     <div className="flex items-center justify-between mb-2">
                         <h4 className="font-bold text-white">Rewards Earned!</h4>
@@ -738,8 +745,8 @@ const BeatTheOracleView: React.FC = () => {
             )}
 
             {loading && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
+                <div className={modalClasses.overlay}>
+                    <div className={`${modalClasses.content} p-6 flex items-center space-x-3`}>
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
                         <span className="text-white">Processing prediction...</span>
                     </div>

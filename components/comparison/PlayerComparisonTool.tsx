@@ -12,8 +12,7 @@ import {
   playerComparisonService, 
   PlayerComparison
 } from '../../services/playerComparisonService';
-import { productionSportsDataService, NFLPlayer } from '../../services/productionSportsDataService';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface PlayerComparisonToolProps {
   className?: string;

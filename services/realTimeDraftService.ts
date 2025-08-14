@@ -203,6 +203,9 @@ class RealTimeDraftService {
         reject(new Error('Leave room timeout'));
       }, 3000);
 
+      if (!this.currentDraftRoom) {
+        return reject(new Error('Not in a draft room.'));
+      }
       this.socket?.emit('leave_draft_room', { draftRoomId: this.currentDraftRoom.id }, (response: any) => {
         clearTimeout(timeout);
         
@@ -230,6 +233,9 @@ class RealTimeDraftService {
         reject(new Error('Pick timeout'));
       }, 5000);
 
+      if (!this.currentDraftRoom) {
+        return reject(new Error('Not in a draft room.'));
+      }
       this.socket?.emit('make_pick', {
         draftRoomId: this.currentDraftRoom.id,
         pick: pickRequest
@@ -256,6 +262,9 @@ class RealTimeDraftService {
     }
 
     return new Promise((resolve, reject) => {
+      if (!this.currentDraftRoom) {
+        return reject(new Error('Not in a draft room.'));
+      }
       this.socket?.emit('set_auto_pick', {
         draftRoomId: this.currentDraftRoom.id,
         enabled,
@@ -278,6 +287,9 @@ class RealTimeDraftService {
       throw new Error('Not connected to draft room');
     }
 
+    if (!this.currentDraftRoom) {
+      throw new Error('Not in a draft room.');
+    }
     this.socket.emit('chat_message', {
       draftRoomId: this.currentDraftRoom.id,
       message
@@ -293,6 +305,9 @@ class RealTimeDraftService {
     }
 
     return new Promise((resolve, reject) => {
+      if (!this.currentDraftRoom) {
+        return reject(new Error('Not in a draft room.'));
+      }
       this.socket?.emit('pause_draft', {
         draftRoomId: this.currentDraftRoom.id,
         paused

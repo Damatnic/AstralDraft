@@ -4,6 +4,7 @@
  */
 
 import { getUserSubscription, getUserBilling } from '../backend/db/payment-schema';
+import { runQuery, getRow } from '../backend/db/index';
 
 // Premium feature access levels
 export enum FeatureTier {
@@ -191,16 +192,22 @@ export class PremiumFeatureService {
     }
 
     /**
-     * Get current usage for a feature (placeholder implementation)
-     * In a real app, this would query your usage tracking table
+     * Get current usage for a feature from database
      */
     static async getFeatureUsage(userId: number, featureName: FeatureName): Promise<number> {
         try {
-            // Placeholder implementation - would query subscription_usage table
-            // For demonstration, return random low usage for different features
-            const baseUsage = Math.floor(Math.random() * 3); // 0-2 for demo
-            console.log(`Getting usage for user ${userId}, feature ${featureName}: ${baseUsage}`);
-            return baseUsage;
+            // Query actual usage from database
+            const result = await getRow(`
+                SELECT COALESCE(SUM(usage_amount), 0) as total_usage
+                FROM feature_usage 
+                WHERE user_id = ? 
+                AND feature_name = ? 
+                AND created_at >= date('now', 'start of month')
+            `, [userId, featureName]);
+            
+            const usage = result ? Number(result.total_usage) : 0;
+            console.log(`Getting usage for user ${userId}, feature ${featureName}: ${usage}`);
+            return usage;
         } catch (error) {
             console.error('Error getting feature usage:', error);
             return 0;
@@ -223,8 +230,12 @@ export class PremiumFeatureService {
                 throw new Error(`Feature ${featureName} not available for user tier ${access.tier}`);
             }
 
-            // Record the usage (implement based on your needs)
-            // This would typically insert into subscription_usage table
+            // Record the usage in database
+            await runQuery(`
+                INSERT INTO feature_usage (user_id, feature_name, usage_amount, created_at)
+                VALUES (?, ?, ?, datetime('now'))
+            `, [userId, featureName, amount]);
+            
             console.log(`Recording usage: User ${userId} used ${amount} of ${featureName}`);
             
             return true;

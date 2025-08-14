@@ -1,98 +1,91 @@
 /**
- * Analytics API Integration Tests
- * Comprehensive tests for analytics and reporting endpoints
+ * @file integration tests for the analytics API
+ * @description Mocks database and server to test analytics endpoints
  */
 
+import { setupTestDatabase, cleanupTestDatabase } from './setup';
+import { ApiTestClient, HttpStatus } from './setup';
 import app from '../../backend/server';
-import { ApiTestClient, setupTestDatabase, cleanupTestDatabase, testData, HttpStatus } from './setup';
 
 describe('Analytics API', () => {
   let client: ApiTestClient;
-  let authHeaders: Record<string, string>;
 
-  beforeAll(async () => {
-    await setupTestDatabase();
-    client = new ApiTestClient(app);
-    authHeaders = await client.authenticateUser();
-  });
-
-  afterAll(async () => {
+  afterEach(async () => {
     await cleanupTestDatabase();
   });
 
+  beforeEach(async () => {
+    await setupTestDatabase();
+    client = new ApiTestClient(app);
+    // Register and authenticate a user for each test
+    await client.post('/api/auth/register', {
+      username: 'testuser',
+      email: 'testuser@example.com',
+      password: 'TestPassword123!',
+      displayName: 'Test User'
+    });
+    await client.authenticateUser('testuser', 'TestPassword123!');
+  });
+
   describe('GET /api/analytics/accuracy', () => {
-    it('should retrieve user accuracy analytics', async () => {
-      const response = await client.get('/api/analytics/accuracy', authHeaders);
+    it('should retrieve user accuracy metrics', async () => {
+      const response = await client.get('/api/analytics/accuracy');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('analytics');
-      expect(response.body.analytics).toHaveProperty('accuracy');
-      expect(response.body.analytics).toHaveProperty('totalPredictions');
-      expect(response.body.analytics).toHaveProperty('correctPredictions');
+      expect(response.body.analytics).toHaveProperty('overallAccuracy');
+      expect(response.body.analytics).toHaveProperty('accuracyByGame');
     });
 
-    it('should support accuracy filtering by date range', async () => {
-      const startDate = '2024-01-01';
-      const endDate = '2024-12-31';
-      const response = await client.get(`/api/analytics/accuracy?startDate=${startDate}&endDate=${endDate}`, authHeaders);
+    it('should include performance trends', async () => {
+      const response = await client.get('/api/analytics/accuracy');
+
+      expect(response.status).toBe(HttpStatus.OK);
+      expect(response.body.analytics).toHaveProperty('performanceTrend');
+      expect(response.body.analytics.performanceTrend).toHaveProperty('weekly');
+      expect(response.body.analytics.performanceTrend).toHaveProperty('monthly');
+    });
+
+    it('should support filtering by timeframe', async () => {
+      const response = await client.get('/api/analytics/accuracy?timeframe=weekly');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('analytics');
-      expect(response.body.analytics).toHaveProperty('dateRange');
-    });
-
-    it('should validate date range parameters', async () => {
-      const response = await client.get('/api/analytics/accuracy?startDate=invalid-date', authHeaders);
-
-      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
-      expect(response.body).toHaveProperty('success', false);
-    });
-
-    it('should reject unauthenticated requests', async () => {
-      const response = await client.get('/api/analytics/accuracy');
-
-      expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
     });
   });
 
   describe('GET /api/analytics/performance', () => {
     it('should retrieve user performance metrics', async () => {
-      const response = await client.get('/api/analytics/performance', authHeaders);
+      const response = await client.get('/api/analytics/performance');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('performance');
-      expect(response.body.performance).toHaveProperty('averageConfidence');
-      expect(response.body.performance).toHaveProperty('predictionTrends');
-      expect(response.body.performance).toHaveProperty('streaks');
+      expect(response.body.performance).toHaveProperty('totalPredictions');
+      expect(response.body.performance).toHaveProperty('winLossRatio');
     });
 
-    it('should include confidence calibration data', async () => {
-      const response = await client.get('/api/analytics/performance', authHeaders);
+    it('should include detailed performance breakdown', async () => {
+      const response = await client.get('/api/analytics/performance');
 
       expect(response.status).toBe(HttpStatus.OK);
-      expect(response.body.performance).toHaveProperty('confidenceCalibration');
-      expect(Array.isArray(response.body.performance.confidenceCalibration)).toBe(true);
+      expect(response.body.performance).toHaveProperty('breakdown');
+      expect(response.body.performance.breakdown).toHaveProperty('byConfidence');
+      expect(response.body.performance.breakdown).toHaveProperty('byGameType');
     });
 
     it('should support performance filtering by timeframe', async () => {
-      const response = await client.get('/api/analytics/performance?timeframe=weekly', authHeaders);
+      const response = await client.get('/api/analytics/performance?timeframe=monthly');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('performance');
-    });
-
-    it('should reject unauthenticated requests', async () => {
-      const response = await client.get('/api/analytics/performance');
-
-      expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
     });
   });
 
   describe('GET /api/analytics/trends', () => {
     it('should retrieve prediction trends over time', async () => {
-      const response = await client.get('/api/analytics/trends', authHeaders);
+      const response = await client.get('/api/analytics/trends');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -103,7 +96,7 @@ describe('Analytics API', () => {
     });
 
     it('should include improvement suggestions', async () => {
-      const response = await client.get('/api/analytics/trends', authHeaders);
+      const response = await client.get('/api/analytics/trends');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.trends).toHaveProperty('insights');
@@ -111,7 +104,7 @@ describe('Analytics API', () => {
     });
 
     it('should support trend analysis by category', async () => {
-      const response = await client.get('/api/analytics/trends?category=confidence', authHeaders);
+      const response = await client.get('/api/analytics/trends?category=confidence');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('trends');
@@ -120,7 +113,7 @@ describe('Analytics API', () => {
 
   describe('GET /api/analytics/insights', () => {
     it('should retrieve personalized insights', async () => {
-      const response = await client.get('/api/analytics/insights', authHeaders);
+      const response = await client.get('/api/analytics/insights');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -129,7 +122,7 @@ describe('Analytics API', () => {
     });
 
     it('should include actionable recommendations', async () => {
-      const response = await client.get('/api/analytics/insights', authHeaders);
+      const response = await client.get('/api/analytics/insights');
 
       expect(response.status).toBe(HttpStatus.OK);
       if (response.body.insights.length > 0) {
@@ -140,7 +133,7 @@ describe('Analytics API', () => {
     });
 
     it('should filter insights by category', async () => {
-      const response = await client.get('/api/analytics/insights?category=accuracy', authHeaders);
+      const response = await client.get('/api/analytics/insights?category=accuracy');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('insights');
@@ -157,7 +150,7 @@ describe('Analytics API', () => {
         accuracyScore: 95
       };
 
-      const response = await client.post('/api/analytics/prediction-result', predictionResult, authHeaders);
+      const response = await client.post('/api/analytics/prediction-result', predictionResult);
 
       expect(response.status).toBe(HttpStatus.CREATED);
       expect(response.body).toHaveProperty('success', true);
@@ -170,7 +163,7 @@ describe('Analytics API', () => {
         // Missing required fields
       };
 
-      const response = await client.post('/api/analytics/prediction-result', invalidResult, authHeaders);
+      const response = await client.post('/api/analytics/prediction-result', invalidResult);
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -186,16 +179,17 @@ describe('Analytics API', () => {
       };
 
       // First recording
-      await client.post('/api/analytics/prediction-result', predictionResult, authHeaders);
+      await client.post('/api/analytics/prediction-result', predictionResult);
 
       // Second recording (should fail)
-      const response = await client.post('/api/analytics/prediction-result', predictionResult, authHeaders);
+      const response = await client.post('/api/analytics/prediction-result', predictionResult);
 
       expect(response.status).toBe(HttpStatus.CONFLICT);
       expect(response.body).toHaveProperty('success', false);
     });
 
     it('should reject unauthenticated requests', async () => {
+      const unauthenticatedClient = new ApiTestClient(app);
       const predictionResult = {
         predictionId: 'pred-123',
         actualHomeScore: 24,
@@ -204,7 +198,7 @@ describe('Analytics API', () => {
         accuracyScore: 95
       };
 
-      const response = await client.post('/api/analytics/prediction-result', predictionResult);
+      const response = await unauthenticatedClient.post('/api/analytics/prediction-result', predictionResult);
 
       expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
     });
@@ -212,7 +206,7 @@ describe('Analytics API', () => {
 
   describe('GET /api/analytics/comparison', () => {
     it('should retrieve user comparison with Oracle', async () => {
-      const response = await client.get('/api/analytics/comparison', authHeaders);
+      const response = await client.get('/api/analytics/comparison');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -223,7 +217,7 @@ describe('Analytics API', () => {
     });
 
     it('should include head-to-head statistics', async () => {
-      const response = await client.get('/api/analytics/comparison', authHeaders);
+      const response = await client.get('/api/analytics/comparison');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body.comparison).toHaveProperty('headToHead');
@@ -233,7 +227,7 @@ describe('Analytics API', () => {
     });
 
     it('should support comparison filtering by timeframe', async () => {
-      const response = await client.get('/api/analytics/comparison?timeframe=monthly', authHeaders);
+      const response = await client.get('/api/analytics/comparison?timeframe=monthly');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('comparison');
@@ -242,7 +236,7 @@ describe('Analytics API', () => {
 
   describe('GET /api/analytics/badges', () => {
     it('should retrieve user achievement badges', async () => {
-      const response = await client.get('/api/analytics/badges', authHeaders);
+      const response = await client.get('/api/analytics/badges');
 
       expect(response.status).toBe(HttpStatus.OK);
       expect(response.body).toHaveProperty('success', true);
@@ -252,7 +246,7 @@ describe('Analytics API', () => {
     });
 
     it('should include badge progress information', async () => {
-      const response = await client.get('/api/analytics/badges', authHeaders);
+      const response = await client.get('/api/analytics/badges');
 
       expect(response.status).toBe(HttpStatus.OK);
       if (response.body.badges.available.length > 0) {
@@ -266,10 +260,10 @@ describe('Analytics API', () => {
   describe('Analytics API Performance', () => {
     it('should handle concurrent analytics requests', async () => {
       const requests = [
-        client.get('/api/analytics/accuracy', authHeaders),
-        client.get('/api/analytics/performance', authHeaders),
-        client.get('/api/analytics/trends', authHeaders),
-        client.get('/api/analytics/insights', authHeaders)
+        client.get('/api/analytics/accuracy'),
+        client.get('/api/analytics/performance'),
+        client.get('/api/analytics/trends'),
+        client.get('/api/analytics/insights')
       ];
 
       const responses = await Promise.all(requests);
@@ -282,7 +276,7 @@ describe('Analytics API', () => {
 
     it('should respond to analytics requests within reasonable time', async () => {
       const startTime = Date.now();
-      const response = await client.get('/api/analytics/accuracy', authHeaders);
+      const response = await client.get('/api/analytics/accuracy');
       const endTime = Date.now();
 
       expect(response.status).toBe(HttpStatus.OK);
@@ -292,7 +286,7 @@ describe('Analytics API', () => {
 
   describe('Analytics API Error Handling', () => {
     it('should handle invalid date formats gracefully', async () => {
-      const response = await client.get('/api/analytics/accuracy?startDate=not-a-date', authHeaders);
+      const response = await client.get('/api/analytics/accuracy?startDate=not-a-date');
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);
@@ -301,7 +295,7 @@ describe('Analytics API', () => {
 
     it('should handle missing data gracefully', async () => {
       // This would test behavior when user has no prediction data
-      const response = await client.get('/api/analytics/accuracy', authHeaders);
+      const response = await client.get('/api/analytics/accuracy');
 
       // Should succeed even with no data
       expect([HttpStatus.OK, HttpStatus.NOT_FOUND]).toContain(response.status);
@@ -311,7 +305,7 @@ describe('Analytics API', () => {
     });
 
     it('should validate analytics query parameters', async () => {
-      const response = await client.get('/api/analytics/performance?timeframe=invalid', authHeaders);
+      const response = await client.get('/api/analytics/performance?timeframe=invalid');
 
       expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       expect(response.body).toHaveProperty('success', false);

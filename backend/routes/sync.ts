@@ -7,6 +7,12 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { runQuery } from '../db/index';
 
+// Import validation middleware
+import {
+    validateSyncOperation,
+    sanitizeInput
+} from '../middleware/oracleValidation';
+
 interface SyncOperation {
   operation: 'put' | 'delete';
   data: any;
@@ -174,7 +180,11 @@ router.post('/userPreferences', authenticateToken, async (req: Request, res: Res
 /**
  * Sync Oracle predictions
  */
-router.post('/oraclePredictions', authenticateToken, async (req: Request, res: Response) => {
+router.post('/oraclePredictions', 
+    authenticateToken, 
+    validateSyncOperation,
+    sanitizeInput,
+    async (req: Request, res: Response) => {
   try {
     const { operation, data }: SyncOperation = req.body;
     const userId = req.user?.id;

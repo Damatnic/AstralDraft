@@ -5,134 +5,101 @@
 
 import request from 'supertest';
 import express from 'express';
-import { initDatabase } from '../../backend/db/index';
 
-// Mock all dependencies before imports
-jest.mock('cors', () => ({
-  __esModule: true,
-  default: jest.fn(() => (req: any, res: any, next: any) => next())
-}));
-
-jest.mock('express-slow-down', () => ({
-  __esModule: true,
-  default: jest.fn(() => (req: any, res: any, next: any) => next())
-}));
-
-jest.mock('express-rate-limit', () => ({
-  __esModule: true,
-  default: jest.fn(() => (req: any, res: any, next: any) => next())
-}));
-
-// Mock database for testing
-jest.mock('../../backend/db/index', () => ({
-  initDatabase: jest.fn(() => Promise.resolve()),
-  db: {
-    prepare: jest.fn(() => ({
-      run: jest.fn(),
-      get: jest.fn(),
-      all: jest.fn(() => [])
-    })),
-    close: jest.fn()
-  }
-}));
-
-// Mock security middleware to avoid rate limiting in tests
-jest.mock('../../backend/middleware/security', () => ({
-  generalRateLimit: (req: any, res: any, next: any) => next(),
-  authRateLimit: (req: any, res: any, next: any) => next(),
-  predictionRateLimit: (req: any, res: any, next: any) => next(),
-  speedLimiter: (req: any, res: any, next: any) => next(),
-  corsConfig: (req: any, res: any, next: any) => next(),
-  securityHeaders: (req: any, res: any, next: any) => next(),
-  securityLogger: (req: any, res: any, next: any) => next(),
-  validateContentType: () => (req: any, res: any, next: any) => next(),
-  requestSizeLimit: () => (req: any, res: any, next: any) => next()
-}));
+// Unmock the real dependencies to ensure tests use actual logic
+jest.unmock('cors');
+jest.unmock('express-slow-down');
+jest.unmock('express-rate-limit');
+jest.unmock('../../backend/db/index');
+jest.unmock('../../backend/middleware/security');
+jest.unmock('../../backend/middleware/auth');
 
 /**
  * Test helper for API requests
  */
 export class ApiTestClient {
-  private app: express.Application;
+  private agent: any;
+  private authToken: string | null = null;
 
   constructor(app: express.Application) {
-    this.app = app;
+    this.agent = request.agent(app);
+  }
+
+  /**
+   * Set authentication token for subsequent requests
+   */
+  setAuth(token: string): void {
+    this.authToken = token;
   }
 
   /**
    * Make GET request to API endpoint
    */
   async get(endpoint: string, headers: Record<string, string> = {}) {
-    return request(this.app)
-      .get(endpoint)
-      .set(headers);
+    const req = this.agent.get(endpoint);
+    if (this.authToken) {
+      req.set('Authorization', `Bearer ${this.authToken}`);
+    }
+    return req.set(headers);
   }
 
   /**
    * Make POST request to API endpoint
    */
   async post(endpoint: string, data: any = {}, headers: Record<string, string> = {}) {
-    return request(this.app)
-      .post(endpoint)
-      .send(data)
-      .set({
-        'Content-Type': 'application/json',
-        ...headers
-      });
+    const req = this.agent.post(endpoint);
+    if (this.authToken) {
+      req.set('Authorization', `Bearer ${this.authToken}`);
+    }
+    return req.send(data).set({
+      'Content-Type': 'application/json',
+      ...headers
+    });
   }
 
   /**
    * Make PUT request to API endpoint
    */
   async put(endpoint: string, data: any = {}, headers: Record<string, string> = {}) {
-    return request(this.app)
-      .put(endpoint)
-      .send(data)
-      .set({
-        'Content-Type': 'application/json',
-        ...headers
-      });
+    const req = this.agent.put(endpoint);
+    if (this.authToken) {
+      req.set('Authorization', `Bearer ${this.authToken}`);
+    }
+    return req.send(data).set({
+      'Content-Type': 'application/json',
+      ...headers
+    });
   }
 
   /**
    * Make DELETE request to API endpoint
    */
   async delete(endpoint: string, headers: Record<string, string> = {}) {
-    return request(this.app)
-      .delete(endpoint)
-      .set(headers);
+    const req = this.agent.delete(endpoint);
+    if (this.authToken) {
+      req.set('Authorization', `Bearer ${this.authToken}`);
+    }
+    return req.set(headers);
   }
 
   /**
    * Authenticate user and return auth headers
    */
-  async authenticateUser(pin: string = '1234'): Promise<Record<string, string>> {
-    const response = await this.post('/api/auth/login', { pin });
-    
+  async authenticateUser(username?: string, password?: string): Promise<void> {
+    const loginCredentials = {
+      username: username || 'testuser',
+      password: password || 'TestPassword123!'
+    };
+
+    const response = await this.post('/api/auth/login', loginCredentials);
     if (response.status === 200 && response.body.token) {
-      return {
-        'Authorization': `Bearer ${response.body.token}`
-      };
+      this.setAuth(response.body.token);
+    } else {
+      // Optionally throw an error to make authentication failures more explicit
+      throw new Error(`Authentication failed with status: ${response.status}`);
     }
-    
-    return {};
   }
 }
-
-/**
- * Setup test database state
- */
-export const setupTestDatabase = async () => {
-  await initDatabase();
-};
-
-/**
- * Clean up test database state
- */
-export const cleanupTestDatabase = async () => {
-  // Mock cleanup - in real implementation would reset database state
-  jest.clearAllMocks();
-};
 
 /**
  * Common test data
@@ -172,3 +139,14 @@ export const HttpStatus = {
   CONFLICT: 409,
   INTERNAL_SERVER_ERROR: 500
 };
+
+import { initDatabase, closeDatabase, seedDatabase } from '../../backend/db';
+
+export async function setupTestDatabase(): Promise<void> {
+    await initDatabase(':memory:');
+    await seedDatabase();
+}
+
+export async function cleanupTestDatabase(): Promise<void> {
+    await closeDatabase();
+}

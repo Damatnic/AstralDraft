@@ -375,27 +375,27 @@ Generated: ${new Date().toISOString()}
 - **Critical Issues**: ${summary.criticalIssues}
 
 ## Touch Target Tests
-${touchTargets.map(t => 
+${touchTargets.map((t: TouchTargetTest) =>
   `- **${t.element}**: ${t.passed ? '✅ PASS' : '❌ FAIL'} (${t.actualSize?.width}x${t.actualSize?.height}px)`
 ).join('\n')}
 
 ## Viewport Tests
-${viewports.map(v => 
+${viewports.map((v: ViewportTest) =>
   `- **${v.viewport}** (${v.width}x${v.height}): ${v.passed ? '✅ PASS' : '❌ FAIL'}${v.issues.length ? '\n  Issues: ' + v.issues.join(', ') : ''}`
 ).join('\n')}
 
 ## Accessibility Issues
-${accessibility.filter(a => !a.passed).map(a => 
+${accessibility.filter((a: MobileTestResult) => !a.passed).map((a: MobileTestResult) =>
   `- **${a.component}**: ${a.issues.join(', ')}`
 ).join('\n')}
 
 ## Performance Issues
-${performance.filter(p => !p.passed).map(p => 
+${performance.filter((p: MobileTestResult) => !p.passed).map((p: MobileTestResult) =>
   `- **${p.component}**: ${p.issues.join(', ')}`
 ).join('\n')}
 
 ## Usability Issues
-${usability.filter(u => !u.passed).map(u => 
+${usability.filter((u: MobileTestResult) => !u.passed).map((u: MobileTestResult) =>
   `- **${u.component}**: ${u.issues.join(', ')}`
 ).join('\n')}
 

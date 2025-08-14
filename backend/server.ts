@@ -5,7 +5,6 @@
 
 import express from 'express';
 import compression from 'compression';
-import { json } from 'body-parser';
 
 // Import security middleware
 import {
@@ -22,6 +21,7 @@ import {
 
 // Import route handlers
 import authRoutes from './routes/auth';
+import enhancedAuthRoutes from './routes/enhancedAuth';
 import leagueRoutes from './routes/leagues';
 import oracleRoutes from './routes/oracle';
 import analyticsRoutes from './routes/analytics';
@@ -56,7 +56,7 @@ app.use('/api/', generalRateLimit);
 app.use(speedLimiter);
 
 // Body parsing middleware with size limits
-app.use(json({ limit: '1mb' })); // Reduced from 10mb for security
+app.use(express.json({ limit: '1mb' })); // Reduced from 10mb for security
 app.use(compression());
 
 // Content-Type validation for JSON endpoints
@@ -77,6 +77,7 @@ app.get('/health', (req, res) => {
 
 // API Routes with specific rate limiting
 app.use('/api/auth', authRateLimit, authRoutes);
+app.use('/api/auth-enhanced', enhancedAuthRoutes); // Enhanced authentication with built-in rate limiting
 app.use('/api/leagues', leagueRoutes);
 app.use('/api/oracle', predictionRateLimit, oracleRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -113,25 +114,28 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Initialize database and start server
-async function startServer() {
-    try {
-        // Initialize database connection
-        await initDatabase();
-        console.log('✅ Database initialized successfully');
+export async function startServer() {
+    return new Promise<import('http').Server>(async (resolve, reject) => {
+        try {
+            // Initialize database connection
+            await initDatabase();
+            console.log('✅ Database initialized successfully');
 
-        // Start server
-        app.listen(PORT, () => {
-            console.log(`🚀 Astral Draft API Server running on port ${PORT}`);
-            console.log(`📝 Environment: ${NODE_ENV}`);
-            console.log(`🔒 Security middleware enabled`);
-            console.log(`📊 Oracle API endpoints available at http://localhost:${PORT}/api/oracle`);
-            console.log(`📈 Analytics API endpoints available at http://localhost:${PORT}/api/analytics`);
-            console.log(`🏈 Health check: http://localhost:${PORT}/health`);
-        });
-    } catch (error) {
-        console.error('❌ Failed to start server:', error);
-        process.exit(1);
-    }
+            // Start server
+            const server = app.listen(PORT, () => {
+                console.log(`🚀 Astral Draft API Server running on port ${PORT}`);
+                console.log(`📝 Environment: ${NODE_ENV}`);
+                console.log(`🔒 Security middleware enabled`);
+                console.log(`📊 Oracle API endpoints available at http://localhost:${PORT}/api/oracle`);
+                console.log(`📈 Analytics API endpoints available at http://localhost:${PORT}/api/analytics`);
+                console.log(`🏈 Health check: http://localhost:${PORT}/health`);
+                resolve(server);
+            });
+        } catch (error) {
+            console.error('❌ Failed to start server:', error);
+            reject(error);
+        }
+    });
 }
 
 // Handle graceful shutdown
@@ -145,7 +149,9 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-// Start the server
-startServer();
+// Start the server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+    startServer();
+}
 
 export default app;

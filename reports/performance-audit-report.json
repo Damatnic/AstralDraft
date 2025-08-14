@@ -1,0 +1,337 @@
+{
+  "timestamp": "2025-08-12T04:31:23.105Z",
+  "metrics": {
+    "staticAssets": {
+      "totalSize": 11761,
+      "jsSize": 2293,
+      "cssSize": 64,
+      "imageSize": 1,
+      "breakdown": {
+        "js": [
+          {
+            "name": "app-services-CKf15DVN.js",
+            "size": 161862,
+            "sizeKB": 158,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-analytics-DIey1BEc.js",
+            "size": 95616,
+            "sizeKB": 93,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-draft-Daob3cdj.js",
+            "size": 52421,
+            "sizeKB": 51,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-management-IgxuUAFe.js",
+            "size": 110610,
+            "sizeKB": 108,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-matchup-B7dQnN_W.js",
+            "size": 10551,
+            "sizeKB": 10,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-oracle-TXNX5PJH.js",
+            "size": 313144,
+            "sizeKB": 306,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "feature-player-BjEGHkUn.js",
+            "size": 39771,
+            "sizeKB": 39,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "index-DIbabm3B.js",
+            "size": 69197,
+            "sizeKB": 68,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "route-draft-BDeiTt3t.js",
+            "size": 321573,
+            "sizeKB": 314,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "route-oracle-BQZ-KY0O.js",
+            "size": 60560,
+            "sizeKB": 59,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-ai-8n8l41Fq.js",
+            "size": 222375,
+            "sizeKB": 217,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-d3-DIfujKoc.js",
+            "size": 62434,
+            "sizeKB": 61,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-dnd-De7o4uDH.js",
+            "size": 45378,
+            "sizeKB": 44,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-framer-u255Qn3e.js",
+            "size": 84720,
+            "sizeKB": 83,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-http-LJdoq4W6.js",
+            "size": 35263,
+            "sizeKB": 34,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-misc-CFGm8KzZ.js",
+            "size": 227258,
+            "sizeKB": 222,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-react-Dz_y7nAA.js",
+            "size": 236722,
+            "sizeKB": 231,
+            "compressionRatio": 0.3
+          },
+          {
+            "name": "vendor-recharts-NCq-PXDo.js",
+            "size": 198913,
+            "sizeKB": 194,
+            "compressionRatio": 0.3
+          }
+        ],
+        "css": [
+          {
+            "name": "index-DBmwad7s.css",
+            "size": 65677,
+            "sizeKB": 64,
+            "compressionRatio": 0.25
+          }
+        ],
+        "images": [
+          {
+            "name": "favicon-B15V0jNp.svg",
+            "size": 1272,
+            "sizeKB": 1,
+            "compressionRatio": 0.4
+          }
+        ],
+        "fonts": [],
+        "other": [
+          {
+            "name": "app-services-CKf15DVN.js.map",
+            "size": 596809,
+            "sizeKB": 583,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-analytics-DIey1BEc.js.map",
+            "size": 326195,
+            "sizeKB": 319,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-draft-Daob3cdj.js.map",
+            "size": 160252,
+            "sizeKB": 156,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-management-IgxuUAFe.js.map",
+            "size": 340523,
+            "sizeKB": 333,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-matchup-B7dQnN_W.js.map",
+            "size": 33507,
+            "sizeKB": 33,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-oracle-TXNX5PJH.js.map",
+            "size": 1088521,
+            "sizeKB": 1063,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "feature-player-BjEGHkUn.js.map",
+            "size": 116024,
+            "sizeKB": 113,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "index-DIbabm3B.js.map",
+            "size": 231907,
+            "sizeKB": 226,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "manifest-DtB3RBbc.json",
+            "size": 2123,
+            "sizeKB": 2,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "route-draft-BDeiTt3t.js.map",
+            "size": 985667,
+            "sizeKB": 963,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "route-oracle-BQZ-KY0O.js.map",
+            "size": 187984,
+            "sizeKB": 184,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-ai-8n8l41Fq.js.map",
+            "size": 1067545,
+            "sizeKB": 1043,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-d3-DIfujKoc.js.map",
+            "size": 264376,
+            "sizeKB": 258,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-dnd-De7o4uDH.js.map",
+            "size": 216761,
+            "sizeKB": 212,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-framer-u255Qn3e.js.map",
+            "size": 465827,
+            "sizeKB": 455,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-http-LJdoq4W6.js.map",
+            "size": 166821,
+            "sizeKB": 163,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-misc-CFGm8KzZ.js.map",
+            "size": 1353385,
+            "sizeKB": 1322,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-react-Dz_y7nAA.js.map",
+            "size": 1103364,
+            "sizeKB": 1078,
+            "compressionRatio": 0.8
+          },
+          {
+            "name": "vendor-recharts-NCq-PXDo.js.map",
+            "size": 920609,
+            "sizeKB": 899,
+            "compressionRatio": 0.8
+          }
+        ]
+      }
+    },
+    "bundleMetrics": {
+      "totalChunks": 18,
+      "vendorChunks": 8,
+      "featureChunks": 6,
+      "largestChunk": 314,
+      "smallestChunk": 10,
+      "averageChunkSize": 127
+    },
+    "loadingStrategy": {
+      "preloadLinks": 4,
+      "moduleScripts": 1,
+      "inlineCSS": true,
+      "externalCSS": 2,
+      "inlineJS": 2
+    },
+    "coreWebVitals": {
+      "fcp": {
+        "estimated": 1428,
+        "threshold": {
+          "good": 1800,
+          "needsImprovement": 3000
+        },
+        "status": "good"
+      },
+      "lcp": {
+        "estimated": 1928,
+        "threshold": {
+          "good": 2500,
+          "needsImprovement": 4000
+        },
+        "status": "good"
+      },
+      "cls": {
+        "estimated": 0.05,
+        "threshold": {
+          "good": 0.1,
+          "needsImprovement": 0.25
+        },
+        "status": "good"
+      },
+      "fid": {
+        "estimated": 279,
+        "threshold": {
+          "good": 100,
+          "needsImprovement": 300
+        },
+        "status": "needs-improvement"
+      }
+    }
+  },
+  "recommendations": [
+    {
+      "type": "asset-size",
+      "severity": "high",
+      "message": "Total asset size (11761KB) is quite large",
+      "suggestion": "Consider code splitting, lazy loading, or asset optimization"
+    },
+    {
+      "type": "js-size",
+      "severity": "medium",
+      "message": "JavaScript bundle size (2293KB) could be optimized",
+      "suggestion": "Implement code splitting and tree shaking"
+    },
+    {
+      "type": "css-splitting",
+      "severity": "low",
+      "message": "Multiple CSS files detected",
+      "suggestion": "Consider inlining critical CSS and lazy loading non-critical styles"
+    },
+    {
+      "type": "cwv-fid",
+      "severity": "medium",
+      "message": "FID estimate (279ms) needs improvement",
+      "suggestion": "Minimize JavaScript execution time, break up long tasks, use web workers for heavy computation"
+    }
+  ],
+  "summary": {
+    "totalRecommendations": 4,
+    "highPriority": 1,
+    "mediumPriority": 2,
+    "lowPriority": 1
+  }
+}

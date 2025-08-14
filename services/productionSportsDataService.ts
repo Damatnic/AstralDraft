@@ -134,14 +134,17 @@ export interface PredictionOption {
 class ProductionSportsDataService {
   private apiRequestCount = 0;
   private lastResetTime = Date.now();
+  private cacheCleanupTimer: NodeJS.Timeout | null = null;
 
   constructor() {
-    this.initializeCache();
+    if (process.env.NODE_ENV !== 'test') {
+      this.initializeCache();
+    }
   }
 
   private initializeCache(): void {
     // Clean up expired cache entries every 5 minutes
-    setInterval(() => {
+    this.cacheCleanupTimer = setInterval(() => {
       const now = Date.now();
       for (const [key, entry] of cache.entries()) {
         if (now > entry.expires) {
@@ -149,6 +152,13 @@ class ProductionSportsDataService {
         }
       }
     }, 5 * 60 * 1000);
+  }
+
+  public cleanup(): void {
+    if (this.cacheCleanupTimer) {
+      clearInterval(this.cacheCleanupTimer);
+      this.cacheCleanupTimer = null;
+    }
   }
 
   private checkRateLimit(api: string, limit: number = 100): boolean {

@@ -8,6 +8,14 @@ import { databaseService, DatabaseAuthUser } from '../services/databaseService';
 import { getActivePredictions, createOraclePrediction, submitUserPrediction } from '../db/enhanced-schema';
 import { runQuery, getRow, getRows } from '../db/index';
 
+// Import validation middleware
+import {
+    validateCreatePrediction,
+    validateSubmitPrediction,
+    sanitizeInput,
+    predictionRateLimit
+} from '../middleware/oracleValidation';
+
 const router = express.Router();
 
 // Custom request interface for our Oracle API
@@ -262,7 +270,12 @@ router.get('/predictions/:id', async (req, res) => {
  * POST /api/oracle/predictions/:id/submit
  * Submit a user prediction
  */
-router.post('/predictions/:id/submit', authenticatePlayer, async (req: OracleRequest, res) => {
+router.post('/predictions/:id/submit', 
+    authenticatePlayer, 
+    validateSubmitPrediction,
+    sanitizeInput,
+    predictionRateLimit,
+    async (req: OracleRequest, res) => {
     try {
         const { id: predictionId } = req.params;
         const { choice, confidence, reasoning }: {
@@ -367,7 +380,11 @@ router.post('/predictions/:id/submit', authenticatePlayer, async (req: OracleReq
  * POST /api/oracle/predictions
  * Create a new Oracle prediction (Admin only)
  */
-router.post('/predictions', authenticatePlayer, async (req: OracleRequest, res) => {
+router.post('/predictions', 
+    authenticatePlayer, 
+    validateCreatePrediction,
+    sanitizeInput,
+    async (req: OracleRequest, res) => {
     try {
         const user = req.oracleUser!;
         

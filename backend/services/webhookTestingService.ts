@@ -5,7 +5,7 @@
 
 import Stripe from 'stripe';
 import crypto from 'crypto';
-import { paymentService } from '../services/paymentService';
+import { paymentService } from '../../services/paymentService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-07-30.basil'

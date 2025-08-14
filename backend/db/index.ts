@@ -6,39 +6,39 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { hashPassword } from '../services/authService';
 
 // Database configuration
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), 'data', 'astral-draft.db');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Global database instance
-let db: sqlite3.Database;
+let db: sqlite3.Database | null = null;
 
 /**
  * Initialize SQLite database with required tables
  */
-export async function initDatabase(): Promise<void> {
+export async function initDatabase(dbPath: string = DB_PATH): Promise<void> {
     try {
-        // Ensure data directory exists
-        const dataDir = path.dirname(DB_PATH);
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
+        // Close existing connection if any
+        if (db) {
+            await closeDatabase();
         }
-
-        // Create database connection
-        db = new sqlite3.Database(DB_PATH, (err) => {
-            if (err) {
-                console.error('Error opening database:', err.message);
-                throw err;
+        
+        const isInMemory = dbPath === ':memory:';
+        if (!isInMemory) {
+            const dataDir = path.dirname(dbPath);
+            if (!fs.existsSync(dataDir)) {
+                fs.mkdirSync(dataDir, { recursive: true });
             }
-            console.log(`📁 Connected to SQLite database: ${DB_PATH}`);
-        });
-
-        // Enable foreign keys
+        }
+        
+        db = new sqlite3.Database(dbPath);
+        console.log(`📁 Connected to SQLite database: ${isInMemory ? 'in-memory' : dbPath}`);
+        
         await runQuery('PRAGMA foreign_keys = ON');
-
-        // Create tables
         await createTables();
+        await createEnhancedTables();
         
         console.log('✅ Database tables initialized successfully');
     } catch (error) {
@@ -60,6 +60,7 @@ async function createTables(): Promise<void> {
             password_hash TEXT NOT NULL,
             display_name TEXT,
             avatar_url TEXT,
+            role TEXT DEFAULT 'user',
             last_login_at DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -71,6 +72,9 @@ async function createTables(): Promise<void> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             refresh_token TEXT UNIQUE NOT NULL,
+            device_info TEXT,
+            ip_address TEXT,
+            last_activity DATETIME,
             expires_at DATETIME NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -105,8 +109,8 @@ async function createTables(): Promise<void> {
             reasoning TEXT,
             points_earned INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
-            FOREIGN KEY (prediction_id) REFERENCES oracle_predictions (id),
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (prediction_id) REFERENCES oracle_predictions (id) ON DELETE CASCADE ON UPDATE CASCADE,
             UNIQUE(user_id, prediction_id)
         )`,
 
@@ -117,7 +121,7 @@ async function createTables(): Promise<void> {
             metric_name TEXT NOT NULL,
             metric_value REAL NOT NULL,
             calculation_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (prediction_id) REFERENCES oracle_predictions (id)
+            FOREIGN KEY (prediction_id) REFERENCES oracle_predictions (id) ON DELETE CASCADE ON UPDATE CASCADE
         )`,
 
         // User analytics table
@@ -134,7 +138,7 @@ async function createTables(): Promise<void> {
             streak_current INTEGER DEFAULT 0,
             streak_best INTEGER DEFAULT 0,
             calculated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
             UNIQUE(user_id, week, season)
         )`,
 
@@ -151,7 +155,7 @@ async function createTables(): Promise<void> {
             settings TEXT, -- JSON object
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT 1,
-            FOREIGN KEY (creator_id) REFERENCES users (id)
+            FOREIGN KEY (creator_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
         )`,
 
         // League memberships table
@@ -162,8 +166,8 @@ async function createTables(): Promise<void> {
             role TEXT DEFAULT 'member',
             joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT 1,
-            FOREIGN KEY (league_id) REFERENCES social_leagues (id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (league_id) REFERENCES social_leagues (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
             UNIQUE(league_id, user_id)
         )`,
 
@@ -180,8 +184,8 @@ async function createTables(): Promise<void> {
             result_value REAL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             resolved_at DATETIME,
-            FOREIGN KEY (league_id) REFERENCES social_leagues (id),
-            FOREIGN KEY (creator_id) REFERENCES users (id)
+            FOREIGN KEY (league_id) REFERENCES social_leagues (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (creator_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
         )`,
 
         // Group prediction submissions table
@@ -193,8 +197,8 @@ async function createTables(): Promise<void> {
             confidence INTEGER NOT NULL,
             reasoning TEXT,
             submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (group_prediction_id) REFERENCES group_predictions (id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (group_prediction_id) REFERENCES group_predictions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
             UNIQUE(group_prediction_id, user_id)
         )`,
 
@@ -212,8 +216,8 @@ async function createTables(): Promise<void> {
             total_participants INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             resolved_at DATETIME,
-            FOREIGN KEY (league_id) REFERENCES social_leagues (id),
-            FOREIGN KEY (creator_id) REFERENCES users (id)
+            FOREIGN KEY (league_id) REFERENCES social_leagues (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (creator_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
         )`,
 
         // Debate posts table
@@ -226,8 +230,8 @@ async function createTables(): Promise<void> {
             reactions TEXT DEFAULT '[]', -- JSON array of reactions
             is_pinned BOOLEAN DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (debate_id) REFERENCES debates (id),
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            FOREIGN KEY (debate_id) REFERENCES debates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
         )`,
 
         // Debate votes table
@@ -238,8 +242,8 @@ async function createTables(): Promise<void> {
             side TEXT NOT NULL, -- 'A' or 'B'
             reasoning TEXT,
             voted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (debate_id) REFERENCES debates (id),
-            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (debate_id) REFERENCES debates (id) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
             UNIQUE(debate_id, user_id)
         )`,
 
@@ -256,7 +260,21 @@ async function createTables(): Promise<void> {
             request_size INTEGER,
             response_size INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+        )`,
+
+        // Security audit log table for enhanced security monitoring
+        `CREATE TABLE IF NOT EXISTS security_audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address TEXT NOT NULL,
+            user_id INTEGER,
+            event_type TEXT NOT NULL, -- 'login', 'pin_change', 'invalid_token', etc.
+            success BOOLEAN NOT NULL,
+            user_agent TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            details TEXT DEFAULT '{}', -- JSON object for additional data
+            severity TEXT DEFAULT 'INFO', -- 'INFO', 'WARNING', 'CRITICAL'
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
         )`
     ];
 
@@ -289,10 +307,178 @@ async function createIndexes(): Promise<void> {
         'CREATE INDEX IF NOT EXISTS idx_debate_posts_debate_id ON debate_posts(debate_id)',
         'CREATE INDEX IF NOT EXISTS idx_debate_votes_debate_id ON debate_votes(debate_id)',
         'CREATE INDEX IF NOT EXISTS idx_api_usage_endpoint ON api_usage(endpoint)',
-        'CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at)'
+        'CREATE INDEX IF NOT EXISTS idx_api_usage_created_at ON api_usage(created_at)',
+        'CREATE INDEX IF NOT EXISTS idx_security_audit_ip ON security_audit_log(ip_address)',
+        'CREATE INDEX IF NOT EXISTS idx_security_audit_user ON security_audit_log(user_id)',
+        'CREATE INDEX IF NOT EXISTS idx_security_audit_type ON security_audit_log(event_type)',
+        'CREATE INDEX IF NOT EXISTS idx_security_audit_timestamp ON security_audit_log(timestamp)'
     ];
 
     for (const index of indexes) {
+        await runQuery(index);
+    }
+}
+
+/**
+ * Create enhanced tables for Oracle system
+ */
+async function createEnhancedTables(): Promise<void> {
+    const enhancedTables = [
+        // Simple authentication users table (compatible with our auth system)
+        `CREATE TABLE IF NOT EXISTS simple_auth_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_number INTEGER NOT NULL UNIQUE, -- 1-10 for players, 0 for admin
+            username TEXT NOT NULL DEFAULT 'Player',
+            pin_hash TEXT NOT NULL,
+            email TEXT,
+            display_name TEXT,
+            color_theme TEXT DEFAULT '#3B82F6',
+            emoji TEXT DEFAULT '👤',
+            is_admin BOOLEAN DEFAULT 0,
+            is_active BOOLEAN DEFAULT 1,
+            session_token TEXT,
+            last_login_at DATETIME,
+            login_attempts INTEGER DEFAULT 0,
+            locked_until DATETIME,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+
+        // Enhanced Oracle predictions table with real-time features
+        `CREATE TABLE IF NOT EXISTS enhanced_oracle_predictions (
+            id TEXT PRIMARY KEY,
+            week INTEGER NOT NULL,
+            season INTEGER DEFAULT 2024,
+            type TEXT NOT NULL,
+            category TEXT DEFAULT 'GENERAL',
+            question TEXT NOT NULL,
+            description TEXT,
+            options TEXT NOT NULL, -- JSON array of option strings
+            oracle_choice INTEGER NOT NULL,
+            oracle_confidence INTEGER NOT NULL,
+            oracle_reasoning TEXT NOT NULL,
+            data_points TEXT NOT NULL, -- JSON array of data sources
+            actual_result INTEGER,
+            is_resolved BOOLEAN DEFAULT 0,
+            consensus_choice INTEGER,
+            consensus_confidence INTEGER,
+            participants_count INTEGER DEFAULT 0,
+            total_submissions INTEGER DEFAULT 0,
+            difficulty_level INTEGER DEFAULT 5, -- 1-10 scale
+            points_multiplier REAL DEFAULT 1.0,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            created_by INTEGER DEFAULT 0, -- 0 = system, user_id for user-created
+            tags TEXT DEFAULT '[]', -- JSON array of tags
+            metadata TEXT DEFAULT '{}' -- JSON object for additional data
+        )`,
+
+        // Enhanced user predictions with scoring data
+        `CREATE TABLE IF NOT EXISTS enhanced_user_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            prediction_id TEXT NOT NULL,
+            user_choice INTEGER NOT NULL,
+            user_confidence INTEGER NOT NULL,
+            reasoning TEXT,
+            points_earned INTEGER DEFAULT 0,
+            base_points INTEGER DEFAULT 0,
+            bonus_points INTEGER DEFAULT 0,
+            is_correct BOOLEAN,
+            confidence_accuracy REAL, -- How close confidence was to actual probability
+            time_to_submit INTEGER, -- Seconds from prediction creation to submission
+            revision_count INTEGER DEFAULT 0, -- Number of times user changed their prediction
+            submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE,
+            FOREIGN KEY (prediction_id) REFERENCES enhanced_oracle_predictions (id) ON DELETE CASCADE,
+            UNIQUE(user_id, prediction_id)
+        )`,
+
+        // Real-time prediction updates tracking
+        `CREATE TABLE IF NOT EXISTS prediction_updates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prediction_id TEXT NOT NULL,
+            update_type TEXT NOT NULL, -- 'CONSENSUS_CHANGE', 'PARTICIPATION_UPDATE', 'TIME_WARNING', etc.
+            old_value TEXT,
+            new_value TEXT,
+            message TEXT,
+            metadata TEXT DEFAULT '{}', -- JSON object
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (prediction_id) REFERENCES enhanced_oracle_predictions (id) ON DELETE CASCADE
+        )`,
+
+        // User statistics and achievements
+        `CREATE TABLE IF NOT EXISTS user_statistics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            week INTEGER,
+            season INTEGER DEFAULT 2024,
+            total_predictions INTEGER DEFAULT 0,
+            correct_predictions INTEGER DEFAULT 0,
+            accuracy_percentage REAL DEFAULT 0.0,
+            total_points INTEGER DEFAULT 0,
+            current_streak INTEGER DEFAULT 0,
+            best_streak INTEGER DEFAULT 0,
+            oracle_beats INTEGER DEFAULT 0, -- Times beat Oracle confidence
+            average_confidence REAL DEFAULT 0.0,
+            early_bird_predictions INTEGER DEFAULT 0, -- Submitted within first hour
+            last_minute_predictions INTEGER DEFAULT 0, -- Submitted in final hour
+            total_reasoning_length INTEGER DEFAULT 0,
+            categories_participated TEXT DEFAULT '[]', -- JSON array of categories
+            calculated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE,
+            UNIQUE(user_id, week, season)
+        )`,
+
+        // Leaderboard rankings
+        `CREATE TABLE IF NOT EXISTS leaderboard_rankings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            week INTEGER,
+            season INTEGER DEFAULT 2024,
+            rank_overall INTEGER,
+            rank_weekly INTEGER,
+            rank_accuracy INTEGER,
+            rank_points INTEGER,
+            rank_streak INTEGER,
+            points_total INTEGER DEFAULT 0,
+            points_weekly INTEGER DEFAULT 0,
+            accuracy_overall REAL DEFAULT 0.0,
+            accuracy_weekly REAL DEFAULT 0.0,
+            streak_current INTEGER DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE
+        )`
+    ];
+
+    for (const table of enhancedTables) {
+        await runQuery(table);
+    }
+
+    // Create enhanced indexes
+    await createEnhancedIndexes();
+}
+
+/**
+ * Create enhanced indexes for optimal query performance
+ */
+async function createEnhancedIndexes(): Promise<void> {
+    const enhancedIndexes = [
+        'CREATE INDEX IF NOT EXISTS idx_simple_auth_users_player_number ON simple_auth_users(player_number)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_oracle_predictions_week ON enhanced_oracle_predictions(week)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_oracle_predictions_season ON enhanced_oracle_predictions(season)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_oracle_predictions_type ON enhanced_oracle_predictions(type)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_oracle_predictions_expires_at ON enhanced_oracle_predictions(expires_at)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_user_predictions_user_id ON enhanced_user_predictions(user_id)',
+        'CREATE INDEX IF NOT EXISTS idx_enhanced_user_predictions_prediction_id ON enhanced_user_predictions(prediction_id)',
+        'CREATE INDEX IF NOT EXISTS idx_user_statistics_user_id_week ON user_statistics(user_id, week)',
+        'CREATE INDEX IF NOT EXISTS idx_leaderboard_rankings_week_season ON leaderboard_rankings(week, season)',
+        'CREATE INDEX IF NOT EXISTS idx_prediction_updates_prediction_id ON prediction_updates(prediction_id)'
+    ];
+
+    for (const index of enhancedIndexes) {
         await runQuery(index);
     }
 }
@@ -312,6 +498,10 @@ export function getDatabase(): sqlite3.Database {
  */
 export function runQuery(sql: string, params: any[] = []): Promise<any> {
     return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialized. Call initDatabase() first.'));
+            return;
+        }
         db.run(sql, params, function(err) {
             if (err) {
                 reject(new Error(err.message));
@@ -327,6 +517,10 @@ export function runQuery(sql: string, params: any[] = []): Promise<any> {
  */
 export function getRow(sql: string, params: any[] = []): Promise<any> {
     return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialized. Call initDatabase() first.'));
+            return;
+        }
         db.get(sql, params, (err, row) => {
             if (err) {
                 reject(new Error(err.message));
@@ -342,6 +536,10 @@ export function getRow(sql: string, params: any[] = []): Promise<any> {
  */
 export function getRows(sql: string, params: any[] = []): Promise<any[]> {
     return new Promise((resolve, reject) => {
+        if (!db) {
+            reject(new Error('Database not initialized. Call initDatabase() first.'));
+            return;
+        }
         db.all(sql, params, (err, rows) => {
             if (err) {
                 reject(new Error(err.message));
@@ -367,6 +565,7 @@ export function closeDatabase(): Promise<void> {
                 reject(new Error(err.message));
             } else {
                 console.log('📁 Database connection closed');
+                db = null; // Clear the reference
                 resolve();
             }
         });
@@ -391,10 +590,13 @@ export async function seedDatabase(): Promise<void> {
         }
 
         // Create demo user
+        const password = 'TestPassword123!';
+        const hashedPassword = await hashPassword(password);
+        
         await runQuery(`
-            INSERT INTO users (username, email, password_hash, display_name)
-            VALUES (?, ?, ?, ?)
-        `, ['demo_user', 'demo@astraldraft.com', 'hashed_password', 'Demo User']);
+            INSERT INTO users (username, email, password_hash, display_name, role)
+            VALUES (?, ?, ?, ?, ?)
+        `, ['testuser', 'test@example.com', hashedPassword, 'Test User', 'admin']);
 
         console.log('🌱 Database seeded with demo data');
     } catch (error) {

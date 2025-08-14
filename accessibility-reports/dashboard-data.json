@@ -1,0 +1,91 @@
+{
+  "lastUpdated": "2025-08-12T02:45:27.645Z",
+  "latestMetrics": {
+    "timestamp": "2025-08-12T02:45:27.645Z",
+    "totalViolations": 5,
+    "violationsByLevel": {
+      "critical": 0,
+      "serious": 2,
+      "moderate": 3,
+      "minor": 0
+    },
+    "wcagCompliance": {
+      "levelA": 95,
+      "levelAA": 90,
+      "levelAAA": 85
+    },
+    "componentMetrics": [
+      {
+        "componentName": "Button",
+        "violations": 1,
+        "wcagScore": 95,
+        "status": "warning",
+        "lastTested": "2025-08-12T02:45:27.645Z"
+      },
+      {
+        "componentName": "Form",
+        "violations": 0,
+        "wcagScore": 100,
+        "status": "passing",
+        "lastTested": "2025-08-12T02:45:27.645Z"
+      }
+    ],
+    "testCoverage": {
+      "totalComponents": 10,
+      "testedComponents": 8,
+      "coveragePercentage": 80
+    },
+    "performanceMetrics": {
+      "testExecutionTime": 1200,
+      "averageViolationsPerComponent": 0.5
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2025-08-12T02:45:27.645Z",
+      "totalViolations": 5,
+      "violationsByLevel": {
+        "critical": 0,
+        "serious": 2,
+        "moderate": 3,
+        "minor": 0
+      },
+      "wcagCompliance": {
+        "levelA": 95,
+        "levelAA": 90,
+        "levelAAA": 85
+      },
+      "componentMetrics": [
+        {
+          "componentName": "Button",
+          "violations": 1,
+          "wcagScore": 95,
+          "status": "warning",
+          "lastTested": "2025-08-12T02:45:27.645Z"
+        },
+        {
+          "componentName": "Form",
+          "violations": 0,
+          "wcagScore": 100,
+          "status": "passing",
+          "lastTested": "2025-08-12T02:45:27.645Z"
+        }
+      ],
+      "testCoverage": {
+        "totalComponents": 10,
+        "testedComponents": 8,
+        "coveragePercentage": 80
+      },
+      "performanceMetrics": {
+        "testExecutionTime": 1200,
+        "averageViolationsPerComponent": 0.5
+      }
+    }
+  ],
+  "summary": {
+    "totalRuns": 1,
+    "averageScore": 90,
+    "trendDirection": "stable",
+    "lastRunStatus": "success"
+  }
+}

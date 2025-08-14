@@ -235,7 +235,7 @@ const OptimizedOracleRealTimePredictionInterface: React.FC<{
         refetch: refetchPredictions 
     } = useCachedOracleData(
         `predictions-week-${week}`,
-        () => oracleApiClient.getPredictions(week),
+        () => oracleApiClient.getWeeklyPredictions(week),
         'prediction'
     );
     
@@ -245,7 +245,7 @@ const OptimizedOracleRealTimePredictionInterface: React.FC<{
         loading: statsLoading 
     } = useCachedOracleData(
         `user-stats-${user?.id}`,
-        () => oracleApiClient.getUserStats(user?.id || ''),
+        () => oracleApiClient.getUserStats(parseInt(user?.id || '0')),
         'userStats'
     );
 
@@ -293,9 +293,9 @@ const OptimizedOracleRealTimePredictionInterface: React.FC<{
 
     // Filter predictions based on search
     const filteredPredictions = useMemo(() => {
-        if (!predictions || !debouncedQuery) return predictions || [];
+        if (!predictions?.data || !debouncedQuery) return predictions?.data || [];
         
-        return predictions.filter((prediction: any) =>
+        return predictions.data.filter((prediction: any) =>
             prediction.question.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
             prediction.type.toLowerCase().includes(debouncedQuery.toLowerCase())
         );
@@ -407,23 +407,23 @@ const OptimizedOracleRealTimePredictionInterface: React.FC<{
                         className="space-y-4"
                     >
                         {/* User stats widget */}
-                        {userStats && !statsLoading && (
+                        {userStats?.data && !statsLoading && (
                             <Widget title="Your Performance" className="mb-4">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                                     <div>
-                                        <div className="text-2xl font-bold text-blue-600">{userStats.totalPredictions}</div>
+                                        <div className="text-2xl font-bold text-blue-600">{userStats.data.totalPredictions}</div>
                                         <div className="text-sm text-gray-500">Total</div>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-green-600">{userStats.correctPredictions}</div>
+                                        <div className="text-2xl font-bold text-green-600">{userStats.data.correctPredictions}</div>
                                         <div className="text-sm text-gray-500">Correct</div>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-purple-600">{userStats.accuracy.toFixed(1)}%</div>
+                                        <div className="text-2xl font-bold text-purple-600">{userStats.data.accuracy.toFixed(1)}%</div>
                                         <div className="text-sm text-gray-500">Accuracy</div>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-orange-600">{userStats.streak}</div>
+                                        <div className="text-2xl font-bold text-orange-600">{userStats.data.currentStreak}</div>
                                         <div className="text-sm text-gray-500">Streak</div>
                                     </div>
                                 </div>

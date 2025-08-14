@@ -76,8 +76,10 @@ class ProductionOraclePredictionService {
   private currentSeason: number = 2024;
 
   constructor() {
-    // Initialize service asynchronously
-    setTimeout(() => this.initializeService(), 0);
+    // Initialize service asynchronously, but not in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      setTimeout(() => this.initializeService(), 0);
+    }
   }
 
   private async initializeService(): Promise<void> {

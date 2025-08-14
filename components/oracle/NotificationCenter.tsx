@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, Clock, Trophy, TrendingUp, Target, AlertTriangle } from 'lucide-react';
+import { Bell, X, Clock, Trophy, TrendingUp, Target } from 'lucide-react';
 import { notificationService, OracleNotification } from '../../services/notificationService';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 

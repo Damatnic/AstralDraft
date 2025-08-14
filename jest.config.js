@@ -1,19 +1,68 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-  preset: 'ts-jest',
-  testEnvironment: 'node', // Changed from jsdom for API tests
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
-  moduleNameMapper: { // Fixed typo: was moduleNameMapping
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy'
-  },
-  transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest'
-  },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testMatch: [
-    '<rootDir>/__tests__/**/*.(ts|tsx|js)',
-    '<rootDir>/src/**/*.(test|spec).(ts|tsx|js)'
+  projects: [
+    {
+      displayName: 'backend',
+      preset: 'ts-jest/presets/default-esm',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+      testMatch: [
+        '<rootDir>/__tests__/api/**/*.test.ts',
+      ],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/dist/',
+        '<rootDir>/__tests__/e2e/',
+        '<rootDir>/__tests__/unit/',
+        '<rootDir>/__tests__/services/',
+        '<rootDir>/__tests__/accessibility/',
+        '.*\\.test\\.tsx$'
+      ],
+      moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@/(.*)$': '<rootDir>/backend/$1',
+      },
+      transform: {
+        '^.+\\.ts$': [
+          'ts-jest',
+          {
+            useESM: true,
+            tsconfig: 'tsconfig.backend.json',
+          },
+        ],
+      },
+    },
+    {
+      displayName: 'frontend',
+      preset: 'ts-jest',
+      testEnvironment: 'jsdom',
+      testMatch: [
+        '<rootDir>/src/**/*.test.tsx',
+        '<rootDir>/src/**/*.test.ts',
+        '<rootDir>/__tests__/unit/**/*.test.ts',
+        '<rootDir>/__tests__/services/**/*.test.ts',
+        '<rootDir>/__tests__/accessibility/**/*.test.ts',
+        '<rootDir>/__tests__/e2e/**/*.test.ts'
+      ],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/dist/',
+        '<rootDir>/__tests__/api/'
+      ],
+      setupFilesAfterEnv: ['<rootDir>/__tests__/polyfills.ts', '<rootDir>/src/setupTests.ts'],
+      moduleNameMapper: {
+        '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+        '^@/(.*)$': '<rootDir>/src/$1',
+      },
+      transform: {
+        '^.+\\.(ts|tsx)$': [
+          'ts-jest',
+          {
+            tsconfig: 'tsconfig.json',
+          },
+        ],
+      },
+    },
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
@@ -21,25 +70,10 @@ export default {
     'backend/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/index.tsx',
-    '!src/serviceWorker.ts'
+    '!src/serviceWorker.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   verbose: true,
-  // Add globals for Node.js polyfills
-  globals: {
-    'ts-jest': {
-      useESM: false,
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true
-      }
-    }
-  },
-  // Add test environment options for Node globals
-  testEnvironmentOptions: {
-    // Ensure TextEncoder/TextDecoder are available
-  },
-  // Setup files for polyfills
-  setupFiles: ['<rootDir>/test-setup.js']
+  testTimeout: 30000,
 };

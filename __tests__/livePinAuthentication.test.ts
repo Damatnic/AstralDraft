@@ -1,264 +1,155 @@
 /**
- * Live PIN Authentication Database Test
- * Tests actual database PIN authentication with real data
+ * @fileoverview Integrated tests for PIN authentication and database integrity.
+ * This test suite uses an in-memory SQLite database to ensure tests are isolated,
+ * repeatable, and do not depend on external database files. It uses `bcryptjs`
+ * for hashing and verification, aligning with the application's standard dependencies.
  */
 
-import { describe, it, expect } from '@jest/globals';
-import Database from 'better-sqlite3';
-import * as path from 'path';
-import * as bcrypt from 'bcrypt';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import sqlite3 from 'sqlite3';
+import bcrypt from 'bcryptjs';
 
-const dbPath = path.join(process.cwd(), 'data', 'astral-draft.db');
+// Helper function to run async database queries
+const queryAsync = (db: sqlite3.Database, sql: string, params: any[] = []) => {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+};
 
-describe('Live PIN Authentication Database Test', () => {
-    let db: Database.Database;
+const getAsync = (db: sqlite3.Database, sql: string, params: any[] = []) => {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+};
 
-    beforeAll(() => {
-        db = new Database(dbPath, { readonly: true });
+const runAsync = (db: sqlite3.Database, sql: string, params: any[] = []) => {
+    return new Promise<void>((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+};
+
+describe('Integrated PIN Authentication and Database Test', () => {
+    let db: sqlite3.Database;
+    const testPin = '1234';
+    let testPinHash: string;
+
+    beforeAll(async () => {
+        // Use an in-memory database for isolated testing
+        db = new sqlite3.Database(':memory:');
+        testPinHash = await bcrypt.hash(testPin, 10);
+
+        // Set up the schema and seed data
+        await runAsync(db, `
+            CREATE TABLE simple_auth_users (
+                player_number INTEGER PRIMARY KEY,
+                username TEXT NOT NULL,
+                pin_hash TEXT NOT NULL,
+                is_active BOOLEAN NOT NULL CHECK (is_active IN (0, 1)),
+                session_token TEXT,
+                last_login_at TIMESTAMP
+            );
+        `);
+        
+        await runAsync(db, `CREATE INDEX idx_simple_auth_username ON simple_auth_users(username);`);
+        await runAsync(db, `
+            INSERT INTO simple_auth_users (player_number, username, pin_hash, is_active)
+            VALUES (?, ?, ?, ?);
+        `, [1, 'Test Player', testPinHash, 1]);
     });
 
-    afterAll(() => {
-        db.close();
-    });
-
-    describe('Database User Verification', () => {
-        it('should have exactly 11 users (Admin + 10 friends)', () => {
-            const users = db.prepare(`
-                SELECT player_number, username, is_active 
-                FROM simple_auth_users 
-                ORDER BY player_number
-            `).all();
-
-            expect(users).toHaveLength(11);
-            
-            // Verify we have players 0-10
-            const playerNumbers = users.map((u: any) => u.player_number);
-            expect(playerNumbers).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-        });
-
-        it('should have admin user configured correctly', () => {
-            const admin = db.prepare(`
-                SELECT * FROM simple_auth_users WHERE player_number = 0
-            `).get() as any;
-
-            expect(admin).toBeDefined();
-            expect(admin.username).toBe('Admin');
-            expect(admin.is_active).toBe(1); // SQLite stores booleans as integers
-            expect(admin.pin_hash).toBe('$2b$10$7347hash');
-        });
-
-        it('should have player users configured correctly', () => {
-            const players = db.prepare(`
-                SELECT * FROM simple_auth_users 
-                WHERE player_number BETWEEN 1 AND 10 
-                ORDER BY player_number
-            `).all() as any[];
-
-            expect(players).toHaveLength(10);
-            
-            players.forEach((player, index) => {
-                expect(player.player_number).toBe(index + 1);
-                expect(player.username).toBe(`Player ${index + 1}`);
-                expect(player.is_active).toBe(1);
-                expect(player.pin_hash).toBe('$2b$10$0000hash');
-            });
-        });
-
-        it('should have all required indexes for performance', () => {
-            const indexes = db.prepare(`
-                SELECT name FROM sqlite_master 
-                WHERE type='index' AND name LIKE 'idx_simple_auth_%'
-            `).all() as any[];
-
-            const expectedIndexes = [
-                'idx_simple_auth_player_number',
-                'idx_simple_auth_username', 
-                'idx_simple_auth_active',
-                'idx_simple_auth_session',
-                'idx_simple_auth_active_players'
-            ];
-
-            expectedIndexes.forEach(indexName => {
-                const hasIndex = indexes.some(idx => idx.name === indexName);
-                expect(hasIndex).toBe(true);
-            });
-        });
-
-        it('should have validation triggers for security', () => {
-            const triggers = db.prepare(`
-                SELECT name FROM sqlite_master 
-                WHERE type='trigger' AND name LIKE '%player_number%' OR name LIKE '%pin_hash%'
-            `).all() as any[];
-
-            const expectedTriggers = [
-                'validate_player_number_range_existing',
-                'validate_pin_hash_length_existing'
-            ];
-
-            expectedTriggers.forEach(triggerName => {
-                const hasTrigger = triggers.some(t => t.name === triggerName);
-                expect(hasTrigger).toBe(true);
-            });
+    afterAll((done) => {
+        db.close((err) => {
+            if (err) console.error(err);
+            done();
         });
     });
 
-    describe('PIN Authentication Logic Test', () => {
-        it('should verify admin PIN correctly', () => {
-            const admin = db.prepare(`
-                SELECT pin_hash FROM simple_auth_users WHERE player_number = 0
-            `).get() as any;
-
-            // Test admin PIN logic
-            const adminPin = '7347';
-            const adminHash = '$2b$10$7347hash';
-            
-            expect(admin.pin_hash).toBe(adminHash);
-            
-            // Simulate the verification logic from the service
-            const isValid = admin.pin_hash === adminHash && adminPin === '7347';
+    describe('PIN Authentication Logic', () => {
+        it('should correctly verify a valid PIN', async () => {
+            const user: any = await getAsync(db, 'SELECT pin_hash FROM simple_auth_users WHERE player_number = ?', [1]);
+            const isValid = await bcrypt.compare(testPin, user.pin_hash);
             expect(isValid).toBe(true);
         });
 
-        it('should verify player PIN correctly', () => {
-            const player = db.prepare(`
-                SELECT pin_hash FROM simple_auth_users WHERE player_number = 1
-            `).get() as any;
-
-            // Test player PIN logic
-            const playerPin = '0000';
-            const playerHash = '$2b$10$0000hash';
-            
-            expect(player.pin_hash).toBe(playerHash);
-            
-            // Simulate the verification logic from the service
-            const isValid = player.pin_hash === playerHash && playerPin === '0000';
-            expect(isValid).toBe(true);
-        });
-
-        it('should reject invalid PINs', () => {
-            const admin = db.prepare(`
-                SELECT pin_hash FROM simple_auth_users WHERE player_number = 0
-            `).get() as any;
-
-            // Test with wrong PIN
-            const wrongPin = '1234';
-            const isValid = admin.pin_hash === '$2b$10$7347hash' && wrongPin === '7347';
+        it('should reject an invalid PIN', async () => {
+            const user: any = await getAsync(db, 'SELECT pin_hash FROM simple_auth_users WHERE player_number = ?', [1]);
+            const isValid = await bcrypt.compare('wrong-pin', user.pin_hash);
             expect(isValid).toBe(false);
         });
     });
 
-    describe('Database Constraints Validation', () => {
-        it('should enforce player number constraints (0-10)', () => {
-            // Test that our validation trigger works
-            expect(() => {
-                db.prepare(`
-                    INSERT INTO simple_auth_users 
-                    (player_number, username, pin_hash, is_active) 
-                    VALUES (11, 'Invalid Player', '$2b$10$test', 1)
-                `).run();
-            }).toThrow();
+    describe('Database User and Schema Verification', () => {
+        it('should have the test user configured correctly', async () => {
+            const user: any = await getAsync(db, 'SELECT * FROM simple_auth_users WHERE player_number = ?', [1]);
+            expect(user).toBeDefined();
+            expect(user.username).toBe('Test Player');
+            expect(user.is_active).toBe(1);
+            expect(user.pin_hash).toBe(testPinHash);
         });
 
-        it('should enforce PIN hash length constraints', () => {
-            // Test that PIN hash must be long enough
-            expect(() => {
-                db.prepare(`
-                    INSERT INTO simple_auth_users 
-                    (player_number, username, pin_hash, is_active) 
-                    VALUES (15, 'Test User', 'short', 1)
-                `).run();
-            }).toThrow();
+        it('should have the required index for performance', async () => {
+            const indexes: any = await queryAsync(db, `
+                SELECT name FROM sqlite_master
+                WHERE type='index' AND tbl_name='simple_auth_users'
+            `);
+            const indexNames = indexes.map((idx: any) => idx.name);
+            expect(indexNames).toContain('idx_simple_auth_username');
         });
     });
 
-    describe('Performance Validation', () => {
-        it('should efficiently query by player number', () => {
-            const start = Date.now();
-            
-            // Query by player number (should use index)
-            const user = db.prepare(`
-                SELECT * FROM simple_auth_users WHERE player_number = ?
-            `).get(5);
-            
-            const duration = Date.now() - start;
-            
-            expect(user).toBeDefined();
-            expect(duration).toBeLessThan(10); // Should be very fast with index
+    describe('Session Management', () => {
+        it('should support updating and retrieving a session token', async () => {
+            const testToken = 'session_token_' + Date.now();
+            await runAsync(db, 'UPDATE simple_auth_users SET session_token = ? WHERE player_number = ?', [testToken, 1]);
+
+            const user: any = await getAsync(db, 'SELECT session_token FROM simple_auth_users WHERE player_number = ?', [1]);
+            expect(user.session_token).toBe(testToken);
         });
 
-        it('should efficiently query by username', () => {
-            const start = Date.now();
-            
-            // Query by username (should use index)
-            const user = db.prepare(`
-                SELECT * FROM simple_auth_users WHERE username = ?
-            `).get('Player 3');
-            
-            const duration = Date.now() - start;
-            
-            expect(user).toBeDefined();
-            expect(duration).toBeLessThan(10); // Should be very fast with index
-        });
-
-        it('should efficiently query active users', () => {
-            const start = Date.now();
-            
-            // Query active users (should use index)
-            const activeUsers = db.prepare(`
-                SELECT * FROM simple_auth_users WHERE is_active = 1
-            `).all();
-            
-            const duration = Date.now() - start;
-            
-            expect(activeUsers).toHaveLength(11);
-            expect(duration).toBeLessThan(10); // Should be very fast with index
-        });
-    });
-
-    describe('Session Management Validation', () => {
-        it('should support session token updates', () => {
-            // Test that we can update session tokens
-            const updateStmt = db.prepare(`
-                UPDATE simple_auth_users 
-                SET session_token = ? 
-                WHERE player_number = ?
-            `);
-            
-            const testToken = 'test_session_' + Date.now();
-            const result = updateStmt.run(testToken, 0);
-            
-            expect(result.changes).toBe(1);
-            
-            // Verify the update
-            const updated = db.prepare(`
-                SELECT session_token FROM simple_auth_users WHERE player_number = 0
-            `).get() as any;
-            
-            expect(updated.session_token).toBe(testToken);
-            
-            // Clean up
-            updateStmt.run(null, 0);
-        });
-
-        it('should track last login timestamps', () => {
-            // Test that we can update last login
-            const updateStmt = db.prepare(`
-                UPDATE simple_auth_users 
-                SET last_login_at = ? 
-                WHERE player_number = ?
-            `);
-            
+        it('should track and retrieve the last login timestamp', async () => {
             const now = new Date().toISOString();
-            const result = updateStmt.run(now, 1);
-            
-            expect(result.changes).toBe(1);
-            
-            // Verify the update
-            const updated = db.prepare(`
-                SELECT last_login_at FROM simple_auth_users WHERE player_number = 1
-            `).get() as any;
-            
-            expect(updated.last_login_at).toBe(now);
+            await runAsync(db, 'UPDATE simple_auth_users SET last_login_at = ? WHERE player_number = ?', [now, 1]);
+
+            const user: any = await getAsync(db, 'SELECT last_login_at FROM simple_auth_users WHERE player_number = ?', [1]);
+            expect(user.last_login_at).toBe(now);
+        });
+    });
+    
+    describe('Performance Validation', () => {
+        it('should efficiently query by player number', async () => {
+            const start = Date.now();
+            const user = await getAsync(db, 'SELECT * FROM simple_auth_users WHERE player_number = ?', [1]);
+            const duration = Date.now() - start;
+
+            expect(user).toBeDefined();
+            expect(duration).toBeLessThan(50); // Generous timing for in-memory DB
+        });
+
+        it('should efficiently query by username', async () => {
+            const start = Date.now();
+            const user = await getAsync(db, 'SELECT * FROM simple_auth_users WHERE username = ?', ['Test Player']);
+            const duration = Date.now() - start;
+
+            expect(user).toBeDefined();
+            expect(duration).toBeLessThan(50);
         });
     });
 });

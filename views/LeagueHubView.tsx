@@ -243,3 +243,5 @@ export const LeagueHubView: React.FC = () => {
         </div>
     );
 };
+
+export default LeagueHubView;

@@ -4,6 +4,8 @@ interface LazyComponentWrapperProps {
   fallback?: React.ReactNode;
   errorFallback?: React.ReactNode;
   minDelay?: number; // Minimum delay in ms to prevent flash
+  preload?: boolean; // Preload on hover/focus
+  retryCount?: number; // Number of retry attempts
 }
 
 /**
@@ -18,11 +20,14 @@ export function withLazyLoading<T extends Record<string, any>>(
   const {
     fallback = <ComponentSkeleton />,
     errorFallback = <ErrorFallback />,
-    minDelay = 200
+    minDelay = 200,
+    preload = false,
+    retryCount = 3
   } = options;
 
   return React.forwardRef<any, T>((props, ref) => {
     const [showSkeleton, setShowSkeleton] = React.useState(true);
+    const [retries, setRetries] = React.useState(0);
 
     React.useEffect(() => {
       const timer = setTimeout(() => {
@@ -32,8 +37,22 @@ export function withLazyLoading<T extends Record<string, any>>(
       return () => clearTimeout(timer);
     }, [minDelay]);
 
+    // Preload on component mount if enabled
+    React.useEffect(() => {
+      if (preload) {
+        importFunc().catch(() => {
+          // Silently ignore preload errors
+        });
+      }
+    }, [preload]);
+
     return (
-      <ErrorBoundary fallback={errorFallback}>
+      <ErrorBoundary 
+        retryCount={retryCount}
+        onRetry={() => setRetries(prev => prev + 1)}
+        currentRetries={retries}
+        fallback={errorFallback}
+      >
         <Suspense fallback={showSkeleton ? fallback : <ComponentSkeleton />}>
           <LazyComponent {...props} ref={ref} />
         </Suspense>
@@ -74,26 +93,63 @@ const ErrorFallback: React.FC = () => (
 /**
  * Error boundary for catching component load errors
  */
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback: React.ReactNode;
+  retryCount?: number;
+  onRetry?: () => void;
+  currentRetries?: number;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Component lazy loading error:', error, errorInfo);
   }
 
+  handleRetry = () => {
+    this.setState({ hasError: false, error: undefined });
+    this.props.onRetry?.();
+  };
+
   render() {
     if (this.state.hasError) {
-      return this.props.fallback;
+      const { retryCount = 3, currentRetries = 0 } = this.props;
+      const canRetry = currentRetries < retryCount;
+      
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+          <div className="text-red-600 mb-2">⚠️ Failed to load component</div>
+          {canRetry ? (
+            <button 
+              onClick={this.handleRetry}
+              className="mobile-touch-target px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+            >
+              Retry ({retryCount - currentRetries} attempts left)
+            </button>
+          ) : (
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mobile-touch-target px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+            >
+              Reload Page
+            </button>
+          )}
+        </div>
+      );
     }
 
     return this.props.children;

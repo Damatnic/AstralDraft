@@ -6,9 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Astral Draft - Elite Fantasy Football</title>
     <link rel="manifest" href="/manifest.json" />
+    
+    <!-- DNS prefetch and preconnect for critical resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/vendor-react.js" as="script" crossorigin>
+    <link rel="preload" href="/assets/index.js" as="script" crossorigin>
+    <link rel="preload" href="/assets/index.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" as="style">
+    
+    <!-- Load critical CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Critical CSS inlined for faster FCP -->
     <style>
       :root {
         --background-start-rgb: 2, 6, 23;

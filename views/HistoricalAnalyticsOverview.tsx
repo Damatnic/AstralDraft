@@ -440,3 +440,5 @@ export function HistoricalAnalyticsOverview({ className = '' }: Readonly<Histori
         </div>
     );
 }
+
+export default HistoricalAnalyticsOverview;

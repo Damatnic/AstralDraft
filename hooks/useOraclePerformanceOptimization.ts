@@ -87,7 +87,7 @@ export function useVirtualizedPredictionList(
     }, [scrollTop, items]);
 
     const handleScroll = useCallback(
-        oraclePerformanceOptimizationService.throttledScrollEvent((event: React.UIEvent) => {
+        oraclePerformanceOptimizationService.throttledScrollEvent((event: React.UIEvent<HTMLDivElement>) => {
             const target = event.target as HTMLElement;
             setScrollTop(target.scrollTop);
         }),
@@ -96,7 +96,7 @@ export function useVirtualizedPredictionList(
 
     return {
         virtualState,
-        handleScroll,
+        handleScroll: handleScroll as React.UIEventHandler<HTMLDivElement>,
         totalHeight: virtualState.totalHeight,
         visibleItems: virtualState.visibleItems
     };

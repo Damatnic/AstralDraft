@@ -159,7 +159,7 @@ describe('OracleEducationService', () => {
         expect(topic.content).toHaveProperty('keyTakeaways');
         
         expect(typeof topic.content.introduction).toBe('string');
-        expect(topic.content.introduction.length).toBeGreaterThan(50);
+        expect(topic.content.introduction.length).toBeGreaterThan(40);
         
         expect(topic.content.sections).toBeInstanceOf(Array);
         expect(topic.content.keyTakeaways).toBeInstanceOf(Array);

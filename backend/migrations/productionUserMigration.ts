@@ -44,7 +44,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create refresh tokens table for JWT management
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS refresh_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -56,7 +56,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create user sessions table for tracking active sessions
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS user_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -71,7 +71,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create user stats table for tracking performance
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS user_stats (
         user_id TEXT PRIMARY KEY,
         total_predictions INTEGER DEFAULT 0,
@@ -89,7 +89,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create user notifications table
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS user_notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -104,7 +104,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create audit log for user activities
-    await db.exec(`
+    await runQuery(`
       CREATE TABLE IF NOT EXISTS user_audit_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
@@ -118,7 +118,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create indexes for performance
-    await db.exec(`
+    await runQuery(`
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
       CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscription);
@@ -135,7 +135,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create triggers for automatic timestamp updates
-    await db.exec(`
+    await runQuery(`
       CREATE TRIGGER IF NOT EXISTS update_users_timestamp 
       AFTER UPDATE ON users 
       BEGIN 
@@ -144,7 +144,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create trigger for user stats initialization
-    await db.exec(`
+    await runQuery(`
       CREATE TRIGGER IF NOT EXISTS create_user_stats 
       AFTER INSERT ON users 
       BEGIN 
@@ -153,7 +153,7 @@ export const createProductionUserTables = async (): Promise<void> => {
     `);
 
     // Create views for commonly used queries
-    await db.exec(`
+    await runQuery(`
       CREATE VIEW IF NOT EXISTS user_profile_view AS
       SELECT 
         u.id,

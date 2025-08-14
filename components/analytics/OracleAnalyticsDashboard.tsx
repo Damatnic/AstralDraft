@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, TrendingDown, Target, Trophy, Zap, Users, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Trophy, Zap, BarChart3, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/SimpleAuthContext';
 import { oracleApiClient } from '../../services/oracleApiClient';
 import { useMediaQuery } from '../../hooks/useMediaQuery';

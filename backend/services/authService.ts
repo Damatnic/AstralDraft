@@ -3,14 +3,14 @@
  * Handles JWT token generation, password hashing, and user authentication
  */
 
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { getRow, runQuery } from '../db/index';
 
 // JWT Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'astral-draft-super-secret-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+const JWT_SECRET: string = process.env.JWT_SECRET || 'astral-draft-super-secret-key-change-in-production';
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_REFRESH_EXPIRES_IN: string = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
 // Password Configuration
 const SALT_ROUNDS = 12;
@@ -76,14 +76,14 @@ export function generateTokens(user: User): AuthTokens {
 
     const accessToken = jwt.sign(
         { ...payload, type: 'access' },
-        JWT_SECRET as string,
-        { expiresIn: JWT_EXPIRES_IN }
+        JWT_SECRET,
+        { expiresIn: '7d' } // Use literal string
     );
 
     const refreshToken = jwt.sign(
         { ...payload, type: 'refresh' },
-        JWT_SECRET as string,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN }
+        JWT_SECRET,
+        { expiresIn: '30d' } // Use literal string
     );
 
     // Calculate expiration time for access token
@@ -307,13 +307,19 @@ export async function logoutUserFromAllDevices(userId: number): Promise<void> {
  * Get user by ID
  */
 export async function getUserById(userId: number): Promise<User | null> {
-    const user = await getRow(`
-        SELECT id, username, email, display_name, avatar_url, created_at, is_active
-        FROM users 
-        WHERE id = ? AND is_active = 1
-    `, [userId]);
+    try {
+        const user = await getRow(`
+            SELECT id, username, email, display_name, avatar_url, created_at, is_active
+            FROM users
+            WHERE id = ? AND is_active = 1
+        `, [userId]);
 
-    return user || null;
+        return user || null;
+    } catch (error) {
+        // Log the error for debugging but return null for graceful handling
+        console.error('Database error in getUserById:', error);
+        return null;
+    }
 }
 
 /**

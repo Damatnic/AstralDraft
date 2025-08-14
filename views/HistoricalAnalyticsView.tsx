@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import { useHistoricalAnalytics, TimeframeType } from '../hooks/useHistoricalAnalytics';
 import { PredictionType } from '../services/oraclePredictionService';
+import { useResponsiveBreakpoint, useMobileModalClasses } from '../utils/mobileOptimizationUtils';
 
 // Simple SVG Icons to replace react-icons
 const TrendingUpIcon = () => (
@@ -125,6 +126,9 @@ interface HistoricalAnalyticsViewProps {
 }
 
 export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsViewProps) {
+    const { isMobile } = useResponsiveBreakpoint();
+    const modalClasses = useMobileModalClasses();
+    
     const {
         trendAnalysis,
         accuracyBreakdown,
@@ -214,11 +218,11 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
     }
 
     return (
-        <div className={`space-y-6 ${className}`}>
+        <div className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6 ${className}`}>
             {/* Header */}
             <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Oracle Historical Analytics</h1>
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Oracle Historical Analytics</h1>
                     <p className="text-sm sm:text-base text-gray-600 mt-1">
                         Track prediction accuracy, analyze trends, and gain insights from historical performance
                     </p>
@@ -394,7 +398,7 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                                 </div>
                             ) : trendAnalysis ? (
-                                <ResponsiveContainer width="100%" height={200}>
+                                <ResponsiveContainer width="100%" height={isMobile ? 180 : 200}>
                                     <LineChart data={trendAnalysis.accuracyTrend}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="period" fontSize={12} />
@@ -463,7 +467,7 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
                             className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6"
                         >
                             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Confidence Trend</h3>
-                            <ResponsiveContainer width="100%" height={200}>
+                            <ResponsiveContainer width="100%" height={isMobile ? 180 : 200}>
                                 <AreaChart data={trendAnalysis.confidenceTrend}>
                                     <defs>
                                         <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
@@ -544,7 +548,7 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
                             className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6"
                         >
                             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Accuracy by Confidence Level</h3>
-                            <ResponsiveContainer width="100%" height={200}>
+                            <ResponsiveContainer width="100%" height={isMobile ? 180 : 200}>
                                 <BarChart data={Object.entries(accuracyBreakdown.byConfidence).map(([range, stats]) => ({
                                     range,
                                     accuracy: stats.accuracy,
@@ -773,8 +777,8 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
 
             {/* Export Modal */}
             {showExportModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md">
+                <div className={modalClasses.overlay}>
+                    <div className={`${modalClasses.content} ${isMobile ? 'p-4' : 'p-6'} w-full max-w-sm sm:max-w-md`}>
                         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Export Analytics Data</h3>
                         <div className="space-y-4">
                             <div>
@@ -807,3 +811,5 @@ export function HistoricalAnalyticsView({ className = '' }: HistoricalAnalyticsV
         </div>
     );
 }
+
+export default HistoricalAnalyticsView;

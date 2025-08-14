@@ -22,6 +22,8 @@ class CacheService {
   private readonly cache: Map<string, CacheItem<any>> = new Map();
   private readonly config: CacheConfig;
   private cleanupInterval: NodeJS.Timeout | null = null;
+  private hitCount: number = 0;
+  private missCount: number = 0;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = {
@@ -67,6 +69,7 @@ class CacheService {
     const item = this.cache.get(key);
     
     if (!item) {
+      this.missCount++;
       return null;
     }
 
@@ -75,12 +78,14 @@ class CacheService {
     // Check if item has expired
     if (now - item.timestamp > item.ttl) {
       this.delete(key);
+      this.missCount++;
       return null;
     }
 
     // Update access statistics
     item.accessCount++;
     item.lastAccess = now;
+    this.hitCount++;
     
     return item.data as T;
   }
@@ -267,9 +272,10 @@ class CacheService {
    * Calculate cache hit ratio
    */
   private calculateHitRatio(): number {
-    // This would need to be tracked over time in a real implementation
-    // For now, return a placeholder
-    return 0.85;
+    const totalRequests = this.hitCount + this.missCount;
+    if (totalRequests === 0) return 0;
+    
+    return this.hitCount / totalRequests;
   }
 
   /**

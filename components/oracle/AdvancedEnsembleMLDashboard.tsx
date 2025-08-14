@@ -5,9 +5,9 @@
 
 import React, { useState, useEffect } from 'react';
 import oracleEnsembleMachineLearningService, { 
-    EnsemblePredictionDetail 
+    EnsemblePredictionDetail,
+    FeatureVector 
 } from '../../services/oracleEnsembleMachineLearningService';
-import { FeatureVector } from '../../services/oracleMachineLearningService';
 
 interface Props {
     playerId?: string;

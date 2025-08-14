@@ -192,6 +192,18 @@ export async function createPaymentTables(): Promise<void> {
         )
     `);
 
+    // Feature usage tracking table for premium features
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS feature_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            feature_name TEXT NOT NULL,
+            usage_amount INTEGER DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE
+        )
+    `);
+
     console.log('✅ Payment tables created successfully');
 }
 

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-08-12T04:31:17.281Z",
+  "totalOptimizations": 3,
+  "optimizations": [
+    {
+      "type": "vendor-split",
+      "file": "vendor-react-Dz_y7nAA.js",
+      "size": 231,
+      "recommendation": "Split this vendor chunk into smaller chunks",
+      "impact": "medium",
+      "estimatedSavings": "46 KB"
+    },
+    {
+      "type": "vendor-split",
+      "file": "vendor-misc-CFGm8KzZ.js",
+      "size": 222,
+      "recommendation": "Split this vendor chunk into smaller chunks",
+      "impact": "medium",
+      "estimatedSavings": "44 KB"
+    },
+    {
+      "type": "vendor-split",
+      "file": "vendor-ai-8n8l41Fq.js",
+      "size": 217,
+      "recommendation": "Split this vendor chunk into smaller chunks",
+      "impact": "medium",
+      "estimatedSavings": "43 KB"
+    }
+  ],
+  "summary": {
+    "high": 0,
+    "medium": 3,
+    "low": 0
+  }
+}

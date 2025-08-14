@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import type { Player, Team, League, DraftRecapData, TradeAnalysis, WaiverWireAdvice, PowerRanking, StartSitAdvice, WeeklyReportData, AiLineupSuggestion, SeasonReviewData, DailyBriefingItem, User, DraftGrade, Persona, AiProfileData, DraftEvent, PlayerPosition, WatchlistInsight, WaiverIntelligence, MatchupAnalysis, PlayerStory, TradeOffer, TradeStory, SeasonStory, TeamComparison, IntegrityTask, ScanFinding, ChampionshipOddsSimulation, PlayerVolatility, ProjectedStanding, DraftPickAsset, RecapVideoScene, NewsItem, SideBet, SmartFaabAdvice, TradeSuggestion, NewspaperContent, ChatMessage, DraftPick, LeagueHistoryEntry, GamedayEvent, PlayerNote, TopRivalry } from '../types';
+import type { Player, Team, League, DraftRecapData, TradeAnalysis, WaiverWireAdvice, PowerRanking, StartSitAdvice, WeeklyReportData, AiLineupSuggestion, SeasonReviewData, DailyBriefingItem, User, DraftGrade, Persona, AiProfileData, DraftEvent, PlayerPosition, WatchlistInsight, WaiverIntelligence, MatchupAnalysis, PlayerStory, TradeOffer, TradeStory, SeasonStory, TeamComparison, ProjectedStanding, DraftPickAsset, RecapVideoScene, NewsItem, SideBet, SmartFaabAdvice, TradeSuggestion, NewspaperContent, TopRivalry } from '../types';
 import { players } from "../data/players";
 
 // Enhanced API key detection with multiple fallbacks
@@ -17,7 +17,7 @@ const apiKey = getApiKey();
 const isApiKeyConfigured = !!apiKey;
 
 // Initialize GoogleGenAI only if API key is available
-const ai = isApiKeyConfigured ? new GoogleGenAI({ apiKey: apiKey! }) : null;
+const ai = isApiKeyConfigured && apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // API availability check for development feedback
 if (!isApiKeyConfigured) {
@@ -223,7 +223,8 @@ export const getAiDraftPick = async (
             }
         });
 
-        const jsonString = response.text.trim();
+        const jsonString = response?.text?.trim();
+        if (!jsonString) return null;
         const parsed = JSON.parse(jsonString);
         return parsed.playerName || null;
 
@@ -266,7 +267,7 @@ export const generatePlayerInsight = async (player: Player): Promise<string | nu
             }
         });
 
-        return response.text.trim();
+        return response?.text?.trim() || "The cosmos are cloudy... I cannot gather insight at this moment.";
 
     } catch (e) {
         console.error("Error generating player insight from Gemini:", e);
@@ -275,6 +276,7 @@ export const generatePlayerInsight = async (player: Player): Promise<string | nu
 };
 
 export const generatePlayerNickname = async (player: Player): Promise<string | null> => {
+    if (!ai) return null;
     const prompt = `Generate a single, creative, and cool nickname for the fantasy football player ${player.name} (${player.position}, ${player.team}). The nickname should be short and memorable. Only return the nickname itself, without any quotation marks or extra text.`;
     try {
         const response = await ai.models.generateContent({
@@ -285,7 +287,7 @@ export const generatePlayerNickname = async (player: Player): Promise<string | n
                 temperature: 0.8,
             }
         });
-        return response.text.trim().replace(/"/g, "");
+        return response?.text?.trim().replace(/"/g, "") || null;
     } catch (e) {
         console.error("Error generating player nickname:", e);
         return null;
@@ -296,8 +298,12 @@ export const getAiNomination = async (
     aiTeam: Team,
     availablePlayers: Player[]
 ): Promise<string | null> => {
-    const teamContext = `My current roster is: ${aiTeam.roster.map(p => `${p.name} (${p.position})`).join(', ') || 'empty'}. My budget is $${aiTeam.budget}.`;
-    const playerContext = `The top available players are: ${availablePlayers.slice(0, 50).map(p => `${p.name} ($${p.auctionValue})`).join(', ')}.`;
+    const rosterDisplay = aiTeam.roster.map(p => `${p.name} (${p.position})`).join(', ') || 'empty';
+    const teamContext = `My current roster is: ${rosterDisplay}. My budget is $${aiTeam.budget}.`;
+    
+    const playersDisplay = availablePlayers.slice(0, 50).map(p => `${p.name} ($${p.auctionValue})`).join(', ');
+    const playerContext = `The top available players are: ${playersDisplay}.`;
+    
     const personaInstruction = aiTeam.owner.persona ? `My manager persona is "${aiTeam.owner.persona}". Nominate accordingly, embracing that style (e.g., a Gambler might nominate a high-risk rookie, an Enforcer might nominate an expensive player to drain budgets).` : '';
 
     const fullPrompt = `
@@ -321,6 +327,7 @@ export const getAiNomination = async (
     };
 
     try {
+        if (!ai) return null;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: fullPrompt,
@@ -331,7 +338,8 @@ export const getAiNomination = async (
             }
         });
 
-        const jsonString = response.text.trim();
+        const jsonString = response?.text?.trim();
+        if (!jsonString) return null;
         const parsed = JSON.parse(jsonString);
         return parsed.playerName || null;
 
@@ -350,7 +358,8 @@ export const getAiBid = async (
         return null; // Can't afford it
     }
 
-    const teamContext = `My current roster is: ${aiTeam.roster.map(p => `${p.name} (${p.position})`).join(', ') || 'empty'}. My budget is $${aiTeam.budget}.`;
+    const rosterDisplay = aiTeam.roster.map(p => `${p.name} (${p.position})`).join(', ') || 'empty';
+    const teamContext = `My current roster is: ${rosterDisplay}. My budget is $${aiTeam.budget}.`;
     const personaInstruction = aiTeam.owner.persona ? `My manager persona is "${aiTeam.owner.persona}". Bid accordingly (e.g., a Gambler might overpay for upside, an Analyst will stick to value, an Enforcer will bid up players to drain budgets).` : '';
     
     const fullPrompt = `
@@ -375,6 +384,7 @@ export const getAiBid = async (
     };
 
     try {
+        if (!ai) return null;
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: fullPrompt,
@@ -385,7 +395,8 @@ export const getAiBid = async (
             }
         });
 
-        const jsonString = response.text.trim();
+        const jsonString = response?.text?.trim();
+        if (!jsonString) return null;
         const parsed = JSON.parse(jsonString);
         
         if (parsed.newBid && parsed.newBid > currentBid && parsed.newBid <= aiTeam.budget) {
@@ -398,8 +409,8 @@ export const getAiBid = async (
         return null;
     }
 };
-
 export const generateTeamBranding = async (userName: string): Promise<{ teamName: string; avatar: string; } | null> => {
+    if (!ai) return null;
     const prompt = `Generate a creative, cool fantasy football team name and a single emoji avatar for a manager named ${userName}.`;
     const responseSchema = {
         type: Type.OBJECT,
@@ -426,16 +437,17 @@ export const generateTeamBranding = async (userName: string): Promise<{ teamName
                 responseSchema: responseSchema
             }
         });
-        const jsonString = response.text.trim();
+        const jsonString = response?.text?.trim();
+        if (!jsonString) return null;
         const parsed = JSON.parse(jsonString);
         return parsed;
     } catch (e) {
         console.error("Error generating team branding:", e);
         return null;
-    }
-};
-
+    };
+}
 export const generateAiTeamProfile = async (leagueName: string): Promise<AiProfileData | null> => {
+    if (!ai) return null;
     const personas: Persona[] = ['The Analyst', 'The Gambler', 'The Trash Talker', 'The Cagey Veteran', 'The Homer', 'The Enforcer', 'Tom Brady', 'Bill Belichick', 'Jerry Jones'];
     const prompt = `Create an AI fantasy football manager profile for a league named "${leagueName}". Provide a creative team name, a single emoji avatar, and select one persona from this list: ${personas.join(', ')}.`;
 
@@ -468,7 +480,8 @@ export const generateAiTeamProfile = async (leagueName: string): Promise<AiProfi
                 responseSchema: responseSchema
             }
         });
-        const jsonString = response.text.trim();
+        const jsonString = response?.text?.trim();
+        if (!jsonString) return null;
         const parsed = JSON.parse(jsonString);
         if (personas.includes(parsed.persona)) {
             return parsed;
@@ -480,11 +493,18 @@ export const generateAiTeamProfile = async (leagueName: string): Promise<AiProfi
             name: `AI Team ${Math.floor(Math.random() * 100)}`,
             avatar: '🤖',
             persona: personas[Math.floor(Math.random() * personas.length)]
-        };
+        }
     }
-};
+}
 
-export const streamAssistantResponse = async (prompt: string, leagues: League[], user: User): Promise<AsyncGenerator<GenerateContentResponse>> => { 
+export const streamAssistantResponse = async (prompt: string, leagues: League[], user: User): Promise<AsyncGenerator<GenerateContentResponse>> => {
+    if (!isApiKeyConfigured || !ai) {
+        // Return mock streaming response when API key is not configured
+        return (async function* () {
+            const mockResponse = "Astral is currently offline. Please configure your Gemini API key to enable the assistant.";
+            yield { text: mockResponse } as GenerateContentResponse;
+        })();
+    }
     const context = `
         You are Astral, a hyper-intelligent and witty fantasy football assistant.
         The user you are helping is named ${user.name}.
@@ -501,8 +521,8 @@ export const streamAssistantResponse = async (prompt: string, leagues: League[],
         config: {
             tools: [{googleSearch: {}}]
         }
-    }); 
-    return response; 
+    });
+    return response;
 }
 
 // =====================================================================
@@ -530,10 +550,26 @@ export const generateTrashTalk = async (myTeam: Team, opponentTeam: Team): Promi
 export const analyzeTrade = async (teamAName: string, teamBName: string, playersToA: Player[], playersToB: Player[], picksToA: DraftPickAsset[], picksToB: DraftPickAsset[]): Promise<TradeAnalysis | null> => {
     const valueA = playersToA.reduce((sum, p) => sum + (300 - p.rank), 0);
     const valueB = playersToB.reduce((sum, p) => sum + (300 - p.rank), 0);
-    const winner = valueA > valueB ? 'TEAM_A' : valueB > valueA ? 'TEAM_B' : 'EVEN';
-    const summary = winner === 'EVEN' 
-        ? "This trade seems quite balanced, addressing needs for both sides."
-        : `This deal appears to favor ${winner === 'TEAM_A' ? teamAName : teamBName}, who gets a slight edge in overall player value.`;
+    
+    // Determine trade winner with clear conditional logic
+    let winner: 'TEAM_A' | 'TEAM_B' | 'EVEN';
+    if (valueA > valueB) {
+        winner = 'TEAM_A';
+    } else if (valueB > valueA) {
+        winner = 'TEAM_B';
+    } else {
+        winner = 'EVEN';
+    }
+    
+    // Generate summary based on winner
+    let summary: string;
+    if (winner === 'EVEN') {
+        summary = "This trade seems quite balanced, addressing needs for both sides.";
+    } else {
+        const favoredTeam = winner === 'TEAM_A' ? teamAName : teamBName;
+        summary = `This deal appears to favor ${favoredTeam}, who gets a slight edge in overall player value.`;
+    }
+    
     return mockApiCall({ summary, winner });
 };
 
@@ -552,12 +588,18 @@ export const generateTeamSlogan = async (team: Team): Promise<string | null> => 
 export const generateDraftRecap = async (league: League): Promise<DraftRecapData | null> => {
     const teams = league.teams;
     const bestPick = league.draftPicks.filter(p => p.playerId).sort((a,b) => {
-        const playerA = players.find(p => p.id === a.playerId)!;
-        const playerB = players.find(p => p.id === b.playerId)!;
+        const playerA = players.find(p => p.id === a.playerId);
+        const playerB = players.find(p => p.id === b.playerId);
+        if (!playerA || !playerB) return 0;
         return (playerB.rank - b.overall) - (playerA.rank - a.overall);
     })[0];
-    const bestPickTeam = teams.find(t => t.id === bestPick.teamId)!;
-    const bestPickPlayer = players.find(p => p.id === bestPick.playerId)!;
+    
+    if (!bestPick) return null;
+    
+    const bestPickTeam = teams.find(t => t.id === bestPick.teamId);
+    const bestPickPlayer = players.find(p => p.id === bestPick.playerId);
+    
+    if (!bestPickTeam || !bestPickPlayer) return null;
 
     const recap: DraftRecapData = {
         title: `The ${new Date().getFullYear()} ${league.name} Draft Recap`,
@@ -594,13 +636,19 @@ export const generateWeeklyReport = async (league: League, week: number): Promis
     const matchups = league.schedule.filter(m => m.week === week);
     if(matchups.length === 0) return null;
 
-    const gameOfWeek = matchups.sort((a,b) => (b.teamA.score + b.teamB.score) - (a.teamA.score + a.teamB.score))[0];
-    const teamA = teams.find(t => t.id === gameOfWeek.teamA.teamId)!;
-    const teamB = teams.find(t => t.id === gameOfWeek.teamB.teamId)!;
+    const sortedMatchups = [...matchups].sort((a,b) => (b.teamA.score + b.teamB.score) - (a.teamA.score + a.teamB.score));
+    const gameOfWeek = sortedMatchups[0];
+    const teamA = teams.find(t => t.id === gameOfWeek.teamA.teamId);
+    const teamB = teams.find(t => t.id === gameOfWeek.teamB.teamId);
+    
+    if (!teamA || !teamB) return null;
 
     const allScores = matchups.flatMap(m => [...m.teamA.roster, ...m.teamB.roster]);
-    const playerOfWeekData = allScores.sort((a,b) => b.actualScore - a.actualScore)[0];
-    const playerOfWeekTeam = teams.find(t => t.roster.some(p => p.id === playerOfWeekData.player.id))!;
+    const sortedScores = [...allScores].sort((a,b) => b.actualScore - a.actualScore);
+    const playerOfWeekData = sortedScores[0];
+    const playerOfWeekTeam = teams.find(t => t.roster.some(p => p.id === playerOfWeekData.player.id));
+    
+    if (!playerOfWeekTeam) return null;
 
     const report: WeeklyReportData = {
         title: `The Oracle's Report: Week ${week}`,
@@ -653,10 +701,13 @@ export const getMatchupAnalysis = async (myTeam: Team, opponentTeam: Team): Prom
     const oppRankSum = opponentTeam.roster.reduce((sum, p) => sum + p.rank, 0);
     const winProbability = 50 + ((oppRankSum - myRankSum) / (myRankSum + oppRankSum)) * 50 + (Math.random() - 0.5) * 10;
     
+    const myTeamSorted = [...myTeam.roster].sort((a,b) => a.rank - b.rank);
+    const opponentTeamSorted = [...opponentTeam.roster].sort((a,b) => a.rank - b.rank);
+    
     const analysis: MatchupAnalysis = {
         winProbability: Math.max(5, Math.min(95, parseFloat(winProbability.toFixed(1)))),
-        keyPlayerMyTeam: myTeam.roster.sort((a,b) => a.rank - b.rank)[0].name,
-        keyPlayerOpponent: opponentTeam.roster.sort((a,b) => a.rank - b.rank)[0].name,
+        keyPlayerMyTeam: myTeamSorted[0].name,
+        keyPlayerOpponent: opponentTeamSorted[0].name,
     };
     return mockApiCall(analysis);
 };
@@ -692,8 +743,12 @@ export const simulateTradeImpactOnOdds = async (league: League, teamA: Team, tea
 export const proactivelySuggestTrade = async (myTeam: Team, league: League): Promise<TradeSuggestion | null> => {
     const opponents = league.teams.filter(t => t.id !== myTeam.id);
     const opponent = getRandomElement(opponents);
-    const myBestPlayer = myTeam.roster.sort((a,b) => a.rank - b.rank)[3]; // Trade a good but not best player
-    const theirBestPlayer = opponent.roster.sort((a,b) => a.rank - b.rank)[2];
+    
+    const myRosterSorted = [...myTeam.roster].sort((a,b) => a.rank - b.rank);
+    const theirRosterSorted = [...opponent.roster].sort((a,b) => a.rank - b.rank);
+    
+    const myBestPlayer = myRosterSorted[3]; // Trade a good but not best player
+    const theirBestPlayer = theirRosterSorted[2];
 
     const suggestion: TradeSuggestion = {
         toTeamId: opponent.id,
@@ -718,8 +773,11 @@ export const generateWeeklyRecapVideoScript = async (league: League, week: numbe
     const matchups = league.schedule.filter(m => m.week === week);
     if (!matchups.length) return null;
     const gameOfWeek = matchups[0];
-    const teamA = league.teams.find(t => t.id === gameOfWeek.teamA.teamId)!;
-    const teamB = league.teams.find(t => t.id === gameOfWeek.teamB.teamId)!;
+    const teamA = league.teams.find(t => t.id === gameOfWeek.teamA.teamId);
+    const teamB = league.teams.find(t => t.id === gameOfWeek.teamB.teamId);
+    
+    if (!teamA || !teamB) return null;
+    
     const topPlayer = players[0];
 
     const script: RecapVideoScene[] = [

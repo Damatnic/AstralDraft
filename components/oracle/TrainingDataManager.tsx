@@ -50,17 +50,20 @@ const TrainingDataManager = memo(() => {
         totalSteps: 100,
         currentModel: 'Idle',
         phase: 'preparation',
+        percentage: 0,
+        message: 'Initializing training session',
         accuracy: 0.85,
         loss: 0.23,
         epoch: 45
     });
     const [trainingConfig, setTrainingConfig] = useState<TrainingConfiguration>({
+        algorithm: 'ENSEMBLE',
         modelType: 'ensemble',
+        hyperparameters: { learningRate: 0.001 }, // Move learningRate to hyperparameters
         trainingSplit: 0.8,
         validationSplit: 0.2,
         maxEpochs: 100,
         batchSize: 64,
-        learningRate: 0.001,
         earlyStoppingEnabled: true,
         crossValidationEnabled: true,
         hyperparameterTuningEnabled: false
@@ -693,7 +696,7 @@ const TrainingDataManager = memo(() => {
             if (updates.batchSize !== undefined && updates.batchSize <= 0) {
                 throw new Error('Batch size must be greater than 0');
             }
-            if (updates.learningRate !== undefined && (updates.learningRate <= 0 || updates.learningRate >= 1)) {
+            if (updates.hyperparameters?.learningRate !== undefined && (updates.hyperparameters.learningRate <= 0 || updates.hyperparameters.learningRate >= 1)) {
                 throw new Error('Learning rate must be between 0 and 1');
             }
             if (updates.trainingSplit !== undefined && (updates.trainingSplit <= 0 || updates.trainingSplit >= 1)) {
@@ -843,6 +846,11 @@ const TrainingDataManager = memo(() => {
     const getModelStatusClass = (isActive: boolean, type?: string): string => {
         if (isActive && type === 'STACKED_ENSEMBLE') return 'bg-green-600 text-green-100';
         return isActive ? 'bg-blue-600 text-blue-100' : 'bg-gray-600 text-gray-100';
+    };
+
+    const getModelStatusText = (isActive: boolean, type?: string): string => {
+        if (isActive && type === 'STACKED_ENSEMBLE') return 'Active Ensemble';
+        return isActive ? 'Active' : 'Inactive';
     };
 
     // Helper function to get loading state message
@@ -1194,7 +1202,7 @@ const TrainingDataManager = memo(() => {
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <span className="text-gray-300 text-sm sm:text-base">Learning Rate</span>
-                            <span className="text-white text-sm sm:text-base">{trainingConfig.learningRate}</span>
+                            <span className="text-white text-sm sm:text-base">{trainingConfig.hyperparameters?.learningRate || 0.001}</span>
                         </div>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <span className="text-gray-300 text-sm sm:text-base">Active Models</span>
@@ -1788,13 +1796,18 @@ const TrainingDataManager = memo(() => {
                                 min="0.0001" 
                                 max="0.1" 
                                 step="0.0001" 
-                                value={trainingConfig.learningRate}
-                                onChange={(e) => updateTrainingConfig({ learningRate: parseFloat(e.target.value) })}
+                                value={trainingConfig.hyperparameters?.learningRate || 0.001}
+                                onChange={(e) => updateTrainingConfig({ 
+                                    hyperparameters: { 
+                                        ...trainingConfig.hyperparameters, 
+                                        learningRate: parseFloat(e.target.value) 
+                                    } 
+                                })}
                                 className="w-full min-h-[40px] touch-target"
                             />
                             <div className="flex justify-between text-xs text-gray-400 mt-1">
                                 <span>0.0001</span>
-                                <span className="font-medium text-white">{trainingConfig.learningRate}</span>
+                                <span className="font-medium text-white">{trainingConfig.hyperparameters?.learningRate || 0.001}</span>
                                 <span>0.1</span>
                             </div>
                         </div>
@@ -1896,7 +1909,7 @@ const TrainingDataManager = memo(() => {
                                     </div>
                                     <div className="p-3 bg-gray-800/50 rounded-lg">
                                         <div className="text-xs sm:text-sm text-gray-400">Learning Rate</div>
-                                        <div className="text-lg sm:text-xl font-bold text-white">{trainingConfig.learningRate}</div>
+                                        <div className="text-lg sm:text-xl font-bold text-white">{trainingConfig.hyperparameters?.learningRate || 0.001}</div>
                                     </div>
                                 </div>
                             </div>

@@ -64,3 +64,5 @@ export const WeeklyRecapVideoView: React.FC = () => {
         </div>
     );
 };
+
+export default WeeklyRecapVideoView;

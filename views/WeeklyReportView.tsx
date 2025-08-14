@@ -89,11 +89,18 @@ const WeeklyReportContent: React.FC<{ league: League; dispatch: React.Dispatch<a
                         transition: { duration: 0.5 },
                     }}
                 >
-                    {isLoading ? <div className="p-6"><LoadingSpinner text="Compiling the weekly report..." /></div> :
-                    error ? <ErrorDisplay message={error} onRetry={handleRetry} /> :
-                    report ? <WeeklyReportDisplay report={report} /> : 
-                    <div className="p-6 text-center text-gray-400">No report available for this week.</div>
-                    }
+                    {(() => {
+                        if (isLoading) {
+                            return <div className="p-6"><LoadingSpinner text="Compiling the weekly report..." /></div>;
+                        }
+                        if (error) {
+                            return <ErrorDisplay message={error} onRetry={handleRetry} />;
+                        }
+                        if (report) {
+                            return <WeeklyReportDisplay report={report} />;
+                        }
+                        return <div className="p-6 text-center text-gray-400">No report available for this week.</div>;
+                    })()}
                 </motion.div>
             </main>
         </div>
@@ -117,3 +124,5 @@ export const WeeklyReportView: React.FC = () => {
     
     return <WeeklyReportContent league={league} dispatch={dispatch} />;
 };
+
+export default WeeklyReportView;

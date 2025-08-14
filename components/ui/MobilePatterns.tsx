@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { AccessibleButton } from './AccessibleButton';
+import { useFocusTrap } from '../../utils/accessibility';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -35,15 +36,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const [startY, setStartY] = React.useState(0);
   const [currentY, setCurrentY] = React.useState(0);
   const sheetRef = React.useRef<HTMLDivElement>(null);
-  const { containerRef: focusTrapRef } = useFocusTrap(isOpen);
+  const { containerRef } = useFocusTrap(isOpen);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Set the ref for both focus trap and sheet functionality
   React.useEffect(() => {
-    if (sheetRef.current && focusTrapRef) {
-      (focusTrapRef as React.MutableRefObject<HTMLElement>).current = sheetRef.current;
+    if (sheetRef.current && containerRef.current) {
+      containerRef.current = sheetRef.current;
     }
-  }, [focusTrapRef]);
+  }, [containerRef]);
 
   React.useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -265,17 +266,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   overlay = true
 }) => {
   const drawerRef = React.useRef<HTMLDivElement>(null);
-  const { trapFocus, releaseFocus } = useFocusTrap();
+  const { containerRef } = useFocusTrap(isOpen);
 
   React.useEffect(() => {
-    if (isOpen && drawerRef.current) {
-      trapFocus(drawerRef.current);
-    } else {
-      releaseFocus();
+    if (isOpen && drawerRef.current && containerRef.current) {
+      containerRef.current = drawerRef.current;
     }
-    
-    return () => releaseFocus();
-  }, [isOpen, trapFocus, releaseFocus]);
+  }, [isOpen, containerRef]);
 
   React.useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -346,17 +343,22 @@ export const MobileTabs: React.FC<MobileTabsProps> = ({
   onTabChange,
   className = ''
 }) => {
-  const { navigationProps } = useKeyboardNavigation({
-    items: tabs.map(tab => tab.id),
-    onSelect: onTabChange,
-    orientation: 'horizontal'
-  });
+  // Simple keyboard navigation implementation
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+      onTabChange(tabs[currentIndex - 1].id);
+    } else if (e.key === 'ArrowRight' && currentIndex < tabs.length - 1) {
+      onTabChange(tabs[currentIndex + 1].id);
+    }
+  }, [tabs, activeTab, onTabChange]);
 
   return (
     <div 
       className={`flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 overflow-x-auto ${className}`}
       role="tablist"
-      {...navigationProps}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
     >
       {tabs.map((tab) => (
         <button
@@ -487,5 +489,3 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     </div>
   );
 };
-
-export { useKeyboardNavigation } from '../utils/keyboardNavigation';

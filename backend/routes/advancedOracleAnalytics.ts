@@ -6,6 +6,13 @@
 import express from 'express';
 import { getRows, getRow } from '../db/index';
 
+// Import validation middleware
+import {
+    validateAnalyticsReport,
+    validateAdvancedAnalytics,
+    sanitizeInput
+} from '../middleware/oracleValidation';
+
 const router = express.Router();
 
 /**
@@ -514,7 +521,10 @@ router.get('/insights', async (req, res) => {
  * POST /api/oracle/analytics/report
  * Generate comprehensive analytics report
  */
-router.post('/report', async (req, res) => {
+router.post('/report', 
+    validateAnalyticsReport,
+    sanitizeInput,
+    async (req, res) => {
     try {
         const { 
             season = 2024, 

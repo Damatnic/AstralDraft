@@ -18,7 +18,7 @@ describe('API Integration Tests (Simplified)', () => {
         // Clean up any existing test data
         try {
             await runQuery(`DELETE FROM users WHERE username LIKE 'testuser%'`);
-            await runQuery(`DELETE FROM oracle_predictions WHERE title LIKE 'Test Prediction%'`);
+            await runQuery(`DELETE FROM oracle_predictions WHERE question LIKE 'Test Prediction%'`);
         } catch (error) {
             // Database might not be initialized, ignore cleanup errors
         }
@@ -28,7 +28,7 @@ describe('API Integration Tests (Simplified)', () => {
         // Clean up test data
         try {
             await runQuery(`DELETE FROM users WHERE username LIKE 'testuser%'`);
-            await runQuery(`DELETE FROM oracle_predictions WHERE title LIKE 'Test Prediction%'`);
+            await runQuery(`DELETE FROM oracle_predictions WHERE question LIKE 'Test Prediction%'`);
         } catch (error) {
             // Ignore cleanup errors
         }
@@ -52,7 +52,7 @@ describe('API Integration Tests (Simplified)', () => {
                 userId = registrationResult.user.id;
             } catch (error) {
                 // Registration might fail if user already exists, check the error
-                expect(error.message).toContain('already exists');
+                expect(error instanceof Error ? error.message : String(error)).toContain('already exists');
                 
                 // Get existing user for testing
                 const existingUser = await getRow('SELECT * FROM users WHERE username = ?', ['testuser1']);
@@ -83,7 +83,7 @@ describe('API Integration Tests (Simplified)', () => {
                 fail('Expected authentication to fail');
             } catch (error) {
                 expect(error).toBeDefined();
-                expect(error.message).toContain('Invalid');
+                expect(error instanceof Error ? error.message : String(error)).toContain('Invalid');
             }
         });
 
@@ -260,7 +260,7 @@ describe('API Integration Tests (Simplified)', () => {
                 fail('Expected duplicate registration to fail');
             } catch (error) {
                 expect(error).toBeDefined();
-                expect(error.message).toContain('already exists');
+                expect(error instanceof Error ? error.message : String(error)).toContain('already exists');
             }
         });
 
@@ -276,7 +276,7 @@ describe('API Integration Tests (Simplified)', () => {
                 fail('Expected invalid email registration to fail');
             } catch (error) {
                 expect(error).toBeDefined();
-                expect(error.message).toContain('email');
+                expect(error instanceof Error ? error.message : String(error)).toContain('email');
             }
         });
 
@@ -292,7 +292,7 @@ describe('API Integration Tests (Simplified)', () => {
                 fail('Expected weak password registration to fail');
             } catch (error) {
                 expect(error).toBeDefined();
-                expect(error.message).toContain('password');
+                expect(error instanceof Error ? error.message : String(error)).toContain('password');
             }
         });
     });
@@ -360,7 +360,7 @@ describe('API Integration Tests (Simplified)', () => {
             } catch (error) {
                 expect(error).toBeDefined();
                 // Should be a specific database error
-                expect(error.message).toContain('no such table');
+                expect(error instanceof Error ? error.message : String(error)).toContain('no such table');
             }
         });
 
@@ -370,7 +370,7 @@ describe('API Integration Tests (Simplified)', () => {
                 fail('Expected SQL syntax error');
             } catch (error) {
                 expect(error).toBeDefined();
-                expect(error.message).toContain('syntax error');
+                expect(error instanceof Error ? error.message : String(error)).toContain('syntax error');
             }
         });
     });

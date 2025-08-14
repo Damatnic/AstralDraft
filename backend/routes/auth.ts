@@ -16,17 +16,17 @@ import {
     cleanupExpiredSessions,
     AuthResult 
 } from '../services/authService';
-import { 
-    authenticateToken, 
-    rateLimitAuth, 
-    recordFailedAuth, 
+import {
+    authenticateToken,
+    recordFailedAuth,
     clearAuthAttempts,
     validateAuthRequest,
-    sanitizeUser 
+    sanitizeUser
 } from '../middleware/auth';
 import {
     authValidation,
-    handleValidationErrors
+    handleValidationErrors,
+    authRateLimit
 } from '../middleware/security';
 
 const router = express.Router();
@@ -35,25 +35,24 @@ const router = express.Router();
  * POST /api/auth/login
  * Authenticate user and return session tokens
  */
-router.post('/login', 
+router.post('/login',
+    authRateLimit,
     authValidation.login,
     handleValidationErrors,
-    rateLimitAuth,
     async (req: express.Request, res: express.Response) => {
     try {
-        const { username, password } = req.body;
+        const { login, password } = req.body;
 
-        const authResult: AuthResult = await authenticateUser(username, password);
+        const authResult: AuthResult = await authenticateUser(login, password);
         
         // Clear any previous failed auth attempts
         clearAuthAttempts(req);
 
         res.json({
             success: true,
-            data: {
-                user: authResult.user,
-                tokens: authResult.tokens
-            },
+            user: authResult.user,
+            accessToken: authResult.tokens.accessToken,
+            refreshToken: authResult.tokens.refreshToken,
             message: 'Login successful'
         });
     } catch (error) {
@@ -72,10 +71,10 @@ router.post('/login',
  * POST /api/auth/register
  * Register a new user account
  */
-router.post('/register', 
+router.post('/register',
+    authRateLimit,
     authValidation.register,
     handleValidationErrors,
-    rateLimitAuth,
     async (req: express.Request, res: express.Response) => {
     try {
         const { username, email, password, displayName } = req.body;
@@ -84,10 +83,8 @@ router.post('/register',
 
         res.status(201).json({
             success: true,
-            data: {
-                user: authResult.user,
-                tokens: authResult.tokens
-            },
+            user: authResult.user,
+            tokens: authResult.tokens,
             message: 'User registered successfully'
         });
     } catch (error) {
@@ -234,7 +231,7 @@ router.get('/profile', authenticateToken, async (req: express.Request, res: expr
 
         res.json({
             success: true,
-            data: { user: profileData }
+            ...profileData
         });
     } catch (error) {
         res.status(500).json({

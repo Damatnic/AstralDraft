@@ -7,9 +7,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Widget } from '../ui/Widget';
 import oracleEnsembleMachineLearningService, { 
-    EnsemblePredictionDetail 
+    EnsemblePredictionDetail,
+    FeatureVector 
 } from '../../services/oracleEnsembleMachineLearningService';
-import { FeatureVector } from '../../services/oracleMachineLearningService';
 
 interface Props {
     playerId?: string;

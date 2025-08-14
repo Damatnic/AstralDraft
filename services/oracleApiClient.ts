@@ -56,7 +56,7 @@ class OracleApiClient {
     private pin: string | null = null;
 
     constructor() {
-        this.baseUrl = 'http://localhost:8767';
+        this.baseUrl = 'http://localhost:3001';
     }
 
     /**

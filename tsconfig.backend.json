@@ -1,51 +1,14 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "lib": ["ES2020"],
-    "outDir": "./dist",
+    "outDir": "./dist/backend",
     "rootDir": "./backend",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "removeComments": false,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "noImplicitReturns": false,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
+    "composite": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./backend/*"]
-    },
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": [
-    "backend/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src",
-    "components",
-    "services",
-    "utils",
-    "views",
-    "contexts",
-    "hooks",
-    "data"
-  ],
-  "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
     }
-  }
+  },
+  "include": ["backend/**/*.ts", "backend/**/*.json"],
+  "exclude": ["node_modules", "dist"]
 }

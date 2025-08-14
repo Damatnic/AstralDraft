@@ -5,9 +5,9 @@
  */
 
 import oracleEnsembleMachineLearningService, { 
-    EnsemblePredictionDetail 
+    EnsemblePredictionDetail,
+    FeatureVector 
 } from './oracleEnsembleMachineLearningService';
-import { FeatureVector } from './oracleMachineLearningService';
 
 export interface AdvancedPlayerMetrics {
     // Player Efficiency Metrics
@@ -804,6 +804,7 @@ class OracleAdvancedAnalyticsService {
         try {
             // Convert historical prediction data to MLTrainingData format
             const trainingData = historicalData.map((data, index) => ({
+                id: `training-${data.predictionId || index}`, // Add the required id field
                 predictionId: `historical_${index}`,
                 week: data.week || Math.floor(Math.random() * 17) + 1,
                 type: data.predictionType || 'fantasy_points',

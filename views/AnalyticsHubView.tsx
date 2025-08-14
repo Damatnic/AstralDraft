@@ -14,6 +14,12 @@ import TeamNeedsAnalysis from '../components/analytics/TeamNeedsAnalysis';
 import { useLeague } from '../hooks/useLeague';
 import PickTimeAnalytics from '../components/analytics/PickTimeAnalytics';
 import ChampionshipOddsPreview from '../components/analytics/ChampionshipOddsPreview';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
+import type { AnalyticsViewProps } from '../types/viewTypes';
+
+interface AnalyticsHubViewProps extends AnalyticsViewProps {
+  // Additional props specific to analytics hub
+}
 
 const LeagueWideAnalytics: React.FC<{ league: League; dispatch: React.Dispatch<any> }> = ({ league, dispatch }) => {
     const draftedPlayerIds = new Set(league.draftPicks.map(p => p.playerId));
@@ -131,7 +137,7 @@ const AnalyticsHubContent: React.FC<{ league: League; myTeam: Team; dispatch: Re
 };
 
 
-const AnalyticsHubView: React.FC = () => {
+const AnalyticsHubView: React.FC<AnalyticsHubViewProps> = () => {
     const { dispatch } = useAppState();
     const { league, myTeam } = useLeague();
     
@@ -142,27 +148,40 @@ const AnalyticsHubView: React.FC = () => {
         league.status === 'COMPLETE'
     );
 
+    // Early returns to avoid nested ternary complexity
+    if (!league || !myTeam) {
+        return (
+            <div className="p-8 text-center w-full h-full flex flex-col items-center justify-center">
+                <p>Please select a completed league to view analytics.</p>
+                <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'DASHBOARD' })} className="mt-4 px-4 py-2 bg-cyan-500 rounded">
+                    Back to Dashboard
+                </button>
+            </div>
+        );
+    }
+
+    if (!isDraftFinished) {
+        return (
+            <div className="p-8 text-center w-full h-full flex flex-col items-center justify-center">
+                <p>Draft analytics are available after the draft is complete.</p>
+                <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'DASHBOARD' })} className="mt-4 px-4 py-2 bg-cyan-500 rounded">
+                    Back to Dashboard
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full h-full">
-            {!league || !myTeam ? (
-                <div className="p-8 text-center w-full h-full flex flex-col items-center justify-center">
-                    <p>Please select a completed league to view analytics.</p>
-                    <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'DASHBOARD' })} className="mt-4 px-4 py-2 bg-cyan-500 rounded">
-                        Back to Dashboard
-                    </button>
-                </div>
-            ) : !isDraftFinished ? (
-                 <div className="p-8 text-center w-full h-full flex flex-col items-center justify-center">
-                    <p>Draft analytics are available after the draft is complete.</p>
-                    <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'DASHBOARD' })} className="mt-4 px-4 py-2 bg-cyan-500 rounded">
-                        Back to Dashboard
-                    </button>
-                </div>
-            ) : (
-                <AnalyticsHubContent league={league} myTeam={myTeam} dispatch={dispatch} />
-            )}
+            <AnalyticsHubContent league={league} myTeam={myTeam} dispatch={dispatch} />
         </div>
     );
 };
 
-export default AnalyticsHubView;
+const AnalyticsHubViewWithErrorBoundary: React.FC<AnalyticsHubViewProps> = (props) => (
+    <ErrorBoundary>
+        <AnalyticsHubView {...props} />
+    </ErrorBoundary>
+);
+
+export default AnalyticsHubViewWithErrorBoundary;

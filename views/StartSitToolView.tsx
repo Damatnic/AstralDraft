@@ -11,6 +11,7 @@ import { Avatar } from '../components/ui/Avatar';
 import { CloseIcon } from '../components/icons/CloseIcon';
 import { useLeague } from '../hooks/useLeague';
 import ErrorDisplay from '../components/core/ErrorDisplay';
+import { useResponsiveBreakpoint } from '../utils/mobileOptimizationUtils';
 
 const PlayerList: React.FC<{
     roster: Player[];
@@ -86,6 +87,7 @@ const AdviceDisplay: React.FC<{
     playerAProj: number | undefined;
     playerBProj: number | undefined;
 }> = ({ advice, playerA, playerB, playerAProj, playerBProj }) => {
+    const { isMobile } = useResponsiveBreakpoint();
     const isPlayerARecommended = advice.recommendedPlayerId === playerA.id;
     
     return (
@@ -98,9 +100,14 @@ const AdviceDisplay: React.FC<{
         >
             <Widget title="Oracle's Recommendation">
                 <div className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                    <div className={`grid ${isMobile ? 'grid-cols-1 gap-6' : 'grid-cols-[1fr_auto_1fr]'} items-center gap-4`}>
                         <RecommendedPlayerCard player={playerA} isRecommended={isPlayerARecommended} weeklyProjection={playerAProj}/>
-                        <div className="font-bold text-gray-400 text-2xl">VS</div>
+                        {!isMobile && <div className="font-bold text-gray-400 text-2xl">VS</div>}
+                        {isMobile && (
+                            <div className="flex justify-center">
+                                <div className="font-bold text-gray-400 text-xl">VS</div>
+                            </div>
+                        )}
                         <RecommendedPlayerCard player={playerB} isRecommended={!isPlayerARecommended} weeklyProjection={playerBProj}/>
                     </div>
                     <p className="text-sm text-gray-300 italic text-center mt-4 pt-4 border-t border-white/10">"{advice.summary}"</p>
@@ -112,6 +119,7 @@ const AdviceDisplay: React.FC<{
 
 
 const StartSitToolContent: React.FC<{ league: League; myTeam: Team; dispatch: React.Dispatch<any> }> = ({ league, myTeam, dispatch }) => {
+    const { isMobile } = useResponsiveBreakpoint();
     const [playerAId, setPlayerAId] = React.useState<number | null>(null);
     const [playerBId, setPlayerBId] = React.useState<number | null>(null);
     const [advice, setAdvice] = React.useState<StartSitAdvice | null>(null);
@@ -144,28 +152,40 @@ const StartSitToolContent: React.FC<{ league: League; myTeam: Team; dispatch: Re
 
     return (
         <div className="w-full h-full flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <header className="flex-shrink-0 flex justify-between items-center mb-6">
+            <header className="flex-shrink-0 flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
                 <div>
-                    <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-wider uppercase text-[var(--text-primary)]">
+                    <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-wider uppercase text-[var(--text-primary)]">
                         Start/Sit Tool
                     </h1>
                     <p className="text-sm text-[var(--text-secondary)] tracking-widest">{league.name} - Week {league.currentWeek}</p>
                 </div>
-                <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'TEAM_HUB' })} className="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20">
+                <button onClick={() => dispatch({ type: 'SET_VIEW', payload: 'TEAM_HUB' })} 
+                        className="w-full sm:w-auto px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 min-h-[44px]">
                     Back to Team Hub
                 </button>
             </header>
             <main className="flex-grow max-w-6xl mx-auto w-full">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 mb-6">
+                <div className={`grid ${isMobile ? 'grid-cols-1 gap-6' : 'grid-cols-[1fr_auto_1fr]'} items-center gap-4 mb-6`}>
                      <PlayerSelectionSlot player={playerA} onClear={() => setPlayerAId(null)} label="Player A" weeklyProjection={playerAProj} />
-                     <ArrowRightLeftIcon className="w-8 h-8 text-cyan-400 mx-auto" />
+                     {!isMobile && <ArrowRightLeftIcon className="w-8 h-8 text-cyan-400 mx-auto" />}
+                     {isMobile && (
+                         <div className="flex justify-center">
+                             <ArrowRightLeftIcon className="w-8 h-8 text-cyan-400 rotate-90" />
+                         </div>
+                     )}
                      <PlayerSelectionSlot player={playerB} onClear={() => setPlayerBId(null)} label="Player B" weeklyProjection={playerBProj} />
                 </div>
 
                 <Widget title="Select Players From Your Roster">
-                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <PlayerList roster={myTeam.roster} onSelect={setPlayerAId} selectedId={playerAId} disabledId={playerBId} />
-                        <PlayerList roster={myTeam.roster} onSelect={setPlayerBId} selectedId={playerBId} disabledId={playerAId} />
+                     <div className={`p-4 grid ${isMobile ? 'grid-cols-1 gap-6' : 'grid-cols-2'} gap-4`}>
+                        <div className={isMobile ? 'order-1' : ''}>
+                            <div className="text-sm font-semibold text-cyan-300 mb-2">Player A Selection</div>
+                            <PlayerList roster={myTeam.roster} onSelect={setPlayerAId} selectedId={playerAId} disabledId={playerBId} />
+                        </div>
+                        <div className={isMobile ? 'order-2' : ''}>
+                            <div className="text-sm font-semibold text-cyan-300 mb-2">Player B Selection</div>
+                            <PlayerList roster={myTeam.roster} onSelect={setPlayerBId} selectedId={playerBId} disabledId={playerAId} />
+                        </div>
                     </div>
                 </Widget>
                 
@@ -173,7 +193,7 @@ const StartSitToolContent: React.FC<{ league: League; myTeam: Team; dispatch: Re
                     <button
                         onClick={handleGetAdvice}
                         disabled={!playerAId || !playerBId || isLoading}
-                        className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white font-bold rounded-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                        className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white font-bold rounded-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto min-h-[44px] justify-center"
                     >
                         {isLoading ? (
                             <>

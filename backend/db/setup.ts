@@ -148,10 +148,26 @@ async function resetDatabase(): Promise<boolean> {
 
     try {
         console.log('🧹 Resetting database...');
-        const { runQuery } = await import('./index');
+        const { runQuery, closeDatabase } = await import('./index');
 
-        // Drop enhanced tables first (due to foreign keys)
+        // Disable foreign keys temporarily for cleanup
+        await runQuery('PRAGMA foreign_keys = OFF');
+
+        // Drop payment tables
+        const paymentTables = [
+            'subscription_history',
+            'subscriptions',
+            'payment_methods'
+        ];
+
+        for (const table of paymentTables) {
+            await runQuery(`DROP TABLE IF EXISTS ${table}`);
+        }
+
+        // Drop enhanced tables (due to foreign keys)
         const enhancedTables = [
+            'prediction_submissions',
+            'realtime_predictions',
             'enhanced_user_predictions',
             'user_statistics',
             'leaderboard_rankings',
@@ -166,8 +182,27 @@ async function resetDatabase(): Promise<boolean> {
             await runQuery(`DROP TABLE IF EXISTS ${table}`);
         }
 
+        // Drop social tables
+        const socialTables = [
+            'debate_votes',
+            'debate_posts',
+            'debates',
+            'group_prediction_submissions',
+            'group_predictions',
+            'league_memberships',
+            'social_leagues'
+        ];
+
+        for (const table of socialTables) {
+            await runQuery(`DROP TABLE IF EXISTS ${table}`);
+        }
+
         // Drop base tables
         const baseTables = [
+            'security_audit_log',
+            'api_usage',
+            'user_analytics',
+            'oracle_analytics',
             'user_predictions',
             'oracle_predictions',
             'user_sessions',
@@ -177,6 +212,12 @@ async function resetDatabase(): Promise<boolean> {
         for (const table of baseTables) {
             await runQuery(`DROP TABLE IF EXISTS ${table}`);
         }
+
+        // Re-enable foreign keys
+        await runQuery('PRAGMA foreign_keys = ON');
+
+        // Close the database connection properly
+        await closeDatabase();
 
         console.log('✅ Database reset completed');
         return true;

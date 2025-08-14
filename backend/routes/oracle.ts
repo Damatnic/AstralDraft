@@ -7,13 +7,24 @@
 import express from 'express';
 import { runQuery, getRow, getRows } from '../db/index';
 import { authenticateToken, optionalAuth, requireAdmin } from '../middleware/auth';
+
+// Import comprehensive Oracle validation middleware
 import {
-    predictionValidation,
-    handleValidationErrors
-} from '../middleware/security';
+    validateCreatePrediction,
+    validateSubmitPrediction,
+    validateResolvePrediction,
+    validateProductionQuery,
+    validateAnalyticsReport,
+    sanitizeInput,
+    predictionRateLimit
+} from '../middleware/oracleValidation';
 
 // Import production Oracle service
 import { productionOraclePredictionService } from '../../services/productionOraclePredictionService';
+
+// Import performance optimization services
+import { optimizedOracleQueries } from '../../services/optimizedOracleQueries';
+import { databaseOptimizationService } from '../../services/databaseOptimization';
 
 const router = express.Router();
 
@@ -51,7 +62,11 @@ interface ResolvePredictionRequest {
  * GET /api/oracle/predictions/production
  * Get Oracle predictions using production sports data (real NFL API integration)
  */
-router.get('/predictions/production', optionalAuth, async (req, res) => {
+router.get('/predictions/production', 
+    optionalAuth, 
+    validateProductionQuery,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
     try {
         const { week = 1, season = 2024 } = req.query;
         const weekNum = Number(week);
@@ -59,25 +74,40 @@ router.get('/predictions/production', optionalAuth, async (req, res) => {
         
         console.log(`🔮 Fetching production Oracle predictions for Week ${weekNum}, ${seasonNum}`);
         
-        // Get real predictions from production service
-        const predictions = await productionOraclePredictionService.getPredictionsForWeek(
-            weekNum, 
-            seasonNum
+        // Use optimized queries with caching
+        const optimizedResult = await optimizedOracleQueries.getOraclePredictionsOptimized(
+            weekNum,
+            seasonNum,
+            req.query.type as string,
+            req.query.status as string,
+            req.query.page ? { page: Number(req.query.page), pageSize: Number(req.query.limit || 20) } : undefined
         );
         
-        // Get Oracle accuracy stats
+        // Fallback to production service if optimized query fails
+        let predictions;
+        if (optimizedResult.data.length === 0) {
+            predictions = await productionOraclePredictionService.getPredictionsForWeek(
+                weekNum, 
+                seasonNum
+            );
+        } else {
+            predictions = optimizedResult.data;
+        }
+        
+        // Get Oracle accuracy stats (cached)
         const oracleStats = productionOraclePredictionService.getOracleAccuracy(
             weekNum, 
             seasonNum
         );
         
-        // Get leaderboard data
-        const leaderboard = productionOraclePredictionService.getWeeklyLeaderboard(
-            weekNum, 
-            seasonNum
+        // Get leaderboard data (optimized)
+        const leaderboardResult = await optimizedOracleQueries.getLeaderboardOptimized(
+            seasonNum,
+            weekNum,
+            10
         );
         
-        console.log(`✅ Retrieved ${predictions.length} production predictions`);
+        console.log(`✅ Retrieved ${predictions.length} production predictions ${optimizedResult.cached ? '(cached)' : '(fresh)'}`);
         
         res.json({
             success: true,
@@ -108,7 +138,9 @@ router.get('/predictions/production', optionalAuth, async (req, res) => {
                     resolvedPredictions: predictions.filter(p => p.status === 'resolved').length,
                     oracleAccuracy: oracleStats.accuracy,
                     oracleConfidenceAccuracy: oracleStats.confidenceAccuracy,
-                    leaderboard: leaderboard.slice(0, 10) // Top 10 users
+                    leaderboard: leaderboardResult.data, // Optimized leaderboard
+                    cached: optimizedResult.cached,
+                    executionTime: optimizedResult.executionTime
                 }
             }
         });
@@ -129,7 +161,10 @@ router.get('/predictions/production', optionalAuth, async (req, res) => {
  */
 router.post('/predictions/production/:id/submit', 
     authenticateToken,
-    async (req, res) => {
+    validateSubmitPrediction,
+    sanitizeInput,
+    predictionRateLimit,
+    async (req: express.Request, res: express.Response) => {
         try {
             const { id: predictionId } = req.params;
             const { userChoice, confidence } = req.body as SubmitUserPredictionRequest;
@@ -189,7 +224,9 @@ router.post('/predictions/production/:id/submit',
  */
 router.post('/predictions/production/generate',
     requireAdmin,
-    async (req, res) => {
+    validateCreatePrediction,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
         try {
             const { week, season = 2024 } = req.body;
             
@@ -240,7 +277,9 @@ router.post('/predictions/production/generate',
  */
 router.post('/predictions/production/resolve',
     requireAdmin,
-    async (req, res) => {
+    validateResolvePrediction,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
         try {
             const { week, season = 2024 } = req.body;
             
@@ -286,7 +325,7 @@ router.post('/predictions/production/resolve',
  * GET /api/oracle/predictions (legacy route with fallback to production)
  * Get Oracle predictions with optional filtering
  */
-router.get('/predictions', optionalAuth, async (req, res) => {
+router.get('/predictions', authenticateToken, async (req: express.Request, res: express.Response) => {
     try {
         const { 
             week, 
@@ -343,8 +382,9 @@ router.get('/predictions', optionalAuth, async (req, res) => {
 
         res.json({
             success: true,
-            data: formattedPredictions,
+            predictions: formattedPredictions, // Changed from 'data' to 'predictions'
             pagination: {
+                page: Math.floor(Number(offset) / Number(limit)) + 1, // Add page number
                 limit: Number(limit),
                 offset: Number(offset),
                 total: formattedPredictions.length
@@ -364,7 +404,7 @@ router.get('/predictions', optionalAuth, async (req, res) => {
  * GET /api/oracle/predictions/:id
  * Get a specific Oracle prediction with user interactions
  */
-router.get('/predictions/:id', async (req, res) => {
+router.get('/predictions/:id', async (req: express.Request, res: express.Response) => {
     try {
         const { id } = req.params;
 
@@ -443,10 +483,10 @@ router.get('/predictions/:id', async (req, res) => {
  * Create a new Oracle prediction (Admin only)
  */
 router.post('/predictions', 
-    predictionValidation.create,
-    handleValidationErrors,
-    requireAdmin, 
-    async (req, res) => {
+    requireAdmin,
+    validateCreatePrediction,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
     try {
         const predictionData: CreatePredictionRequest = req.body;
 
@@ -491,7 +531,7 @@ router.post('/predictions',
 
         res.status(201).json({
             success: true,
-            data: {
+            prediction: {
                 ...createdPrediction,
                 options: JSON.parse(createdPrediction.options),
                 data_points: JSON.parse(createdPrediction.data_points),
@@ -514,10 +554,11 @@ router.post('/predictions',
  * Submit a user prediction against an Oracle prediction
  */
 router.post('/predictions/:id/submit', 
-    predictionValidation.submit,
-    handleValidationErrors,
-    authenticateToken, 
-    async (req, res) => {
+    authenticateToken,
+    validateSubmitPrediction,
+    sanitizeInput,
+    predictionRateLimit,
+    async (req: express.Request, res: express.Response) => {
     try {
         const { id: predictionId } = req.params;
         const submissionData: SubmitUserPredictionRequest = req.body;
@@ -596,7 +637,11 @@ router.post('/predictions/:id/submit',
  * POST /api/oracle/predictions/:id/resolve
  * Resolve an Oracle prediction with actual results (Admin only)
  */
-router.post('/predictions/:id/resolve', requireAdmin, async (req, res) => {
+router.post('/predictions/:id/resolve', 
+    requireAdmin, 
+    validateResolvePrediction,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
     try {
         const { id: predictionId } = req.params;
         const resolveData: ResolvePredictionRequest = req.body;
@@ -678,7 +723,7 @@ router.post('/predictions/:id/resolve', requireAdmin, async (req, res) => {
  * GET /api/oracle/leaderboard
  * Get Oracle challenge leaderboard
  */
-router.get('/leaderboard', async (req, res) => {
+router.get('/leaderboard', async (req: express.Request, res: express.Response) => {
     try {
         const { 
             week, 
@@ -736,7 +781,7 @@ router.get('/leaderboard', async (req, res) => {
 
         res.json({
             success: true,
-            data: leaderboard,
+            leaderboard: leaderboard, // Changed from 'data' to 'leaderboard'
             meta: {
                 timeframe,
                 week: week ? Number(week) : null,
@@ -758,7 +803,7 @@ router.get('/leaderboard', async (req, res) => {
  * GET /api/oracle/stats
  * Get Oracle prediction statistics and performance metrics
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', async (req: express.Request, res: express.Response) => {
     try {
         const { season = 2024 } = req.query;
 
@@ -846,109 +891,40 @@ router.get('/stats', async (req, res) => {
 
 /**
  * GET /api/oracle/analytics/performance
- * Get detailed Oracle performance metrics with trends
+ * Get detailed Oracle performance metrics with trends (Optimized)
  */
-router.get('/analytics/performance', async (req, res) => {
+router.get('/analytics/performance', async (req: express.Request, res: express.Response) => {
     try {
         const { season = 2024, timeframe = 'season', weeks = 18 } = req.query;
 
-        // Oracle overall performance
-        const oracleOverall = await getRow(`
-            SELECT 
-                COUNT(*) as total_predictions,
-                AVG(oracle_confidence) as avg_confidence,
-                SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) as correct_predictions,
-                (SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as accuracy_rate
-            FROM enhanced_oracle_predictions
-            WHERE season = ? AND is_resolved = 1
-        `, [Number(season)]);
+        // Use optimized Oracle analytics queries with caching
+        const startOfSeason = new Date(Number(season), 8, 1); // Sept 1st
+        const endOfSeason = new Date(Number(season) + 1, 1, 31); // Jan 31st
 
-        // Weekly accuracy breakdown
-        const weeklyAccuracy = await getRows(`
-            SELECT 
-                week,
-                COUNT(*) as predictions,
-                SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) as correct,
-                (SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as accuracy
-            FROM enhanced_oracle_predictions
-            WHERE season = ? AND is_resolved = 1
-            GROUP BY week
-            ORDER BY week ASC
-        `, [Number(season)]);
-
-        // Type-based accuracy analysis
-        const typeAccuracy = await getRows(`
-            SELECT 
-                type,
-                COUNT(*) as volume,
-                SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) as correct,
-                (SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as accuracy,
-                AVG(oracle_confidence) as avg_confidence
-            FROM enhanced_oracle_predictions
-            WHERE season = ? AND is_resolved = 1
-            GROUP BY type
-            ORDER BY accuracy DESC
-        `, [Number(season)]);
-
-        // Confidence calibration analysis
-        const confidenceCalibration = await getRows(`
-            SELECT 
-                CASE 
-                    WHEN oracle_confidence >= 90 THEN '90-100%'
-                    WHEN oracle_confidence >= 80 THEN '80-89%'
-                    WHEN oracle_confidence >= 70 THEN '70-79%'
-                    WHEN oracle_confidence >= 60 THEN '60-69%'
-                    ELSE '50-59%'
-                END as range,
-                AVG(oracle_confidence) as predicted,
-                (SUM(CASE WHEN oracle_choice = actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as actual,
-                COUNT(*) as volume
-            FROM enhanced_oracle_predictions
-            WHERE season = ? AND is_resolved = 1
-            GROUP BY 
-                CASE 
-                    WHEN oracle_confidence >= 90 THEN '90-100%'
-                    WHEN oracle_confidence >= 80 THEN '80-89%'
-                    WHEN oracle_confidence >= 70 THEN '70-79%'
-                    WHEN oracle_confidence >= 60 THEN '60-69%'
-                    ELSE '50-59%'
-                END
-            ORDER BY AVG(oracle_confidence) DESC
-        `, [Number(season)]);
-
+        const analyticsResult = await optimizedOracleQueries.getOracleAccuracyAnalyticsOptimized(
+            startOfSeason.toISOString().split('T')[0],
+            endOfSeason.toISOString().split('T')[0],
+            'week'
+        );
+        
+        console.log(`📊 Oracle performance analytics retrieved ${analyticsResult.cached ? '(cached)' : '(fresh)'} in ${analyticsResult.executionTime}ms`);
+        
         res.json({
             success: true,
-            data: {
-                overallAccuracy: oracleOverall.accuracy_rate || 0,
-                totalPredictions: oracleOverall.total_predictions || 0,
-                averageConfidence: oracleOverall.avg_confidence || 0,
-                weeklyAccuracy: weeklyAccuracy.map(w => ({
-                    week: w.week,
-                    accuracy: w.accuracy || 0,
-                    predictions: w.predictions || 0
-                })),
-                typeAccuracy: typeAccuracy.reduce((acc, type) => {
-                    acc[type.type] = {
-                        accuracy: type.accuracy || 0,
-                        volume: type.volume || 0,
-                        avgConfidence: type.avg_confidence || 0
-                    };
-                    return acc;
-                }, {}),
-                confidenceCalibration: confidenceCalibration.map(cal => ({
-                    range: cal.range,
-                    predicted: cal.predicted || 0,
-                    actual: cal.actual || 0,
-                    volume: cal.volume || 0
-                }))
+            data: analyticsResult.data,
+            meta: {
+                season: Number(season),
+                cached: analyticsResult.cached,
+                executionTime: analyticsResult.executionTime,
+                generatedAt: new Date().toISOString()
             }
         });
 
     } catch (error) {
-        console.error('Error fetching Oracle performance analytics:', error);
+        console.error('❌ Oracle performance analytics error:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch Oracle performance analytics',
+            error: 'Failed to retrieve Oracle performance analytics',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
     }
@@ -958,65 +934,61 @@ router.get('/analytics/performance', async (req, res) => {
  * GET /api/oracle/analytics/users
  * Get comprehensive user performance metrics
  */
-router.get('/analytics/users', async (req, res) => {
+router.get('/analytics/users', async (req: express.Request, res: express.Response) => {
     try {
-        const { season = 2024 } = req.query;
+        const { season = 2024, userId } = req.query;
 
-        // Overall user performance statistics
-        const userOverall = await getRow(`
-            SELECT 
-                COUNT(DISTINCT eup.user_id) as total_users,
-                COUNT(*) as total_predictions,
-                AVG(eup.user_confidence) as avg_confidence,
-                (SUM(CASE WHEN eup.user_choice = eop.actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as accuracy_rate,
-                (SUM(CASE WHEN eup.beats_oracle = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as beat_oracle_rate
-            FROM enhanced_user_predictions eup
-            INNER JOIN enhanced_oracle_predictions eop ON eup.prediction_id = eop.id
-            WHERE eop.season = ? AND eop.is_resolved = 1
-        `, [Number(season)]);
-
-        // Top performers analysis
-        const topPerformers = await getRows(`
-            SELECT 
-                sau.player_number,
-                CONCAT('Player ', sau.player_number) as user,
-                COUNT(*) as total_predictions,
-                (SUM(CASE WHEN eup.user_choice = eop.actual_result THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) as accuracy,
-                SUM(CASE WHEN eup.beats_oracle = 1 THEN 1 ELSE 0 END) as oracle_beats,
-                AVG(eup.user_confidence) as avg_confidence
-            FROM enhanced_user_predictions eup
-            INNER JOIN enhanced_oracle_predictions eop ON eup.prediction_id = eop.id
-            INNER JOIN simple_auth_users sau ON eup.user_id = sau.id
-            WHERE eop.season = ? AND eop.is_resolved = 1
-            GROUP BY eup.user_id, sau.player_number
-            HAVING COUNT(*) >= 3
-            ORDER BY accuracy DESC
-            LIMIT 10
-        `, [Number(season)]);
-
-        res.json({
-            success: true,
-            data: {
-                averageAccuracy: userOverall.accuracy_rate || 0,
-                beatOracleRate: userOverall.beat_oracle_rate || 0,
-                totalUsers: userOverall.total_users || 0,
-                totalPredictions: userOverall.total_predictions || 0,
-                averageConfidence: userOverall.avg_confidence || 0,
-                topPerformers: topPerformers.map(performer => ({
-                    user: performer.user,
-                    accuracy: performer.accuracy || 0,
-                    oracleBeats: performer.oracle_beats || 0,
-                    totalPredictions: performer.total_predictions || 0,
-                    avgConfidence: performer.avg_confidence || 0
-                }))
-            }
-        });
+        // For user-specific analytics if userId provided
+        if (userId) {
+            const userAnalyticsResult = await optimizedOracleQueries.getUserAnalyticsOptimized(
+                Number(userId),
+                'season',
+                Number(season)
+            );
+            
+            console.log(`👥 User analytics retrieved ${userAnalyticsResult.cached ? '(cached)' : '(fresh)'} in ${userAnalyticsResult.executionTime}ms`);
+            
+            res.json({
+                success: true,
+                data: userAnalyticsResult.data,
+                meta: {
+                    userId: Number(userId),
+                    season: Number(season),
+                    cached: userAnalyticsResult.cached,
+                    executionTime: userAnalyticsResult.executionTime,
+                    generatedAt: new Date().toISOString()
+                }
+            });
+        } else {
+            // For general user analytics, use leaderboard optimization 
+            const leaderboardResult = await optimizedOracleQueries.getLeaderboardOptimized(
+                Number(season),
+                undefined, // no week filter
+                50 // top 50 users
+            );
+            
+            console.log(`👥 User leaderboard retrieved ${leaderboardResult.cached ? '(cached)' : '(fresh)'} in ${leaderboardResult.executionTime}ms`);
+            
+            res.json({
+                success: true,
+                data: {
+                    topPerformers: leaderboardResult.data,
+                    totalUsers: leaderboardResult.data.length
+                },
+                meta: {
+                    season: Number(season),
+                    cached: leaderboardResult.cached,
+                    executionTime: leaderboardResult.executionTime,
+                    generatedAt: new Date().toISOString()
+                }
+            });
+        }
 
     } catch (error) {
-        console.error('Error fetching user analytics:', error);
+        console.error('❌ User analytics error:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to fetch user analytics',
+            error: 'Failed to retrieve user analytics',
             message: error instanceof Error ? error.message : 'Unknown error'
         });
     }
@@ -1026,7 +998,7 @@ router.get('/analytics/users', async (req, res) => {
  * GET /api/oracle/analytics/comparative
  * Get comparative analysis between Oracle and users
  */
-router.get('/analytics/comparative', async (req, res) => {
+router.get('/analytics/comparative', async (req: express.Request, res: express.Response) => {
     try {
         const { season = 2024 } = req.query;
 
@@ -1092,7 +1064,7 @@ router.get('/analytics/comparative', async (req, res) => {
  * GET /api/oracle/analytics/insights
  * Get AI-powered insights and recommendations
  */
-router.get('/analytics/insights', async (req, res) => {
+router.get('/analytics/insights', async (req: express.Request, res: express.Response) => {
     try {
         const { season = 2024 } = req.query;
 
@@ -1173,7 +1145,10 @@ router.get('/analytics/insights', async (req, res) => {
  * POST /api/oracle/analytics/report
  * Generate comprehensive analytics report
  */
-router.post('/analytics/report', async (req, res) => {
+router.post('/analytics/report', 
+    validateAnalyticsReport,
+    sanitizeInput,
+    async (req: express.Request, res: express.Response) => {
     try {
         const { season = 2024, format = 'json', includeCharts = false } = req.body;
 
@@ -1227,7 +1202,7 @@ router.post('/analytics/report', async (req, res) => {
  * GET /api/oracle/leaderboard/global
  * Get global Oracle leaderboard with comprehensive user rankings
  */
-router.get('/leaderboard/global', async (req, res) => {
+router.get('/leaderboard/global', async (req: express.Request, res: express.Response) => {
     try {
         const { 
             season = 2024, 
@@ -1387,5 +1362,165 @@ function calculateUserTier(accuracy: number, predictions: number): string {
     if (accuracy >= 55) return 'Silver';
     return 'Bronze';
 }
+
+/**
+ * GET /api/oracle/accuracy
+ * Get user accuracy metrics compared to Oracle
+ */
+router.get('/accuracy', authenticateToken, async (req: express.Request, res: express.Response) => {
+    try {
+        const userId = req.user?.id || 1; // Demo user if not authenticated
+        const { timeframe = 'all' } = req.query;
+
+        // Get user vs Oracle accuracy metrics
+        const accuracy = await getRow(`
+            SELECT 
+                COUNT(*) as total_predictions,
+                SUM(CASE WHEN up.user_choice = op.actual_result THEN 1 ELSE 0 END) as user_correct,
+                SUM(CASE WHEN op.oracle_choice = op.actual_result THEN 1 ELSE 0 END) as oracle_correct,
+                AVG(up.confidence) as avg_user_confidence,
+                AVG(op.confidence) as avg_oracle_confidence,
+                SUM(CASE WHEN up.user_choice = op.actual_result AND op.oracle_choice != op.actual_result THEN 1 ELSE 0 END) as user_beats_oracle,
+                SUM(CASE WHEN up.user_choice != op.actual_result AND op.oracle_choice = op.actual_result THEN 1 ELSE 0 END) as oracle_beats_user
+            FROM user_predictions up
+            JOIN oracle_predictions op ON up.prediction_id = op.id
+            WHERE up.user_id = ? AND op.is_resolved = 1
+        `, [userId]);
+
+        // Calculate accuracy percentages
+        const totalPredictions = accuracy.total_predictions || 0;
+        const userAccuracy = totalPredictions > 0 ? (accuracy.user_correct / totalPredictions) * 100 : 0;
+        const oracleAccuracy = totalPredictions > 0 ? (accuracy.oracle_correct / totalPredictions) * 100 : 0;
+
+        // Get accuracy by category
+        const categoryAccuracy = await getRows(`
+            SELECT 
+                op.type,
+                COUNT(*) as total_predictions,
+                SUM(CASE WHEN up.user_choice = op.actual_result THEN 1 ELSE 0 END) as user_correct,
+                SUM(CASE WHEN op.oracle_choice = op.actual_result THEN 1 ELSE 0 END) as oracle_correct
+            FROM user_predictions up
+            JOIN oracle_predictions op ON up.prediction_id = op.id
+            WHERE up.user_id = ? AND op.is_resolved = 1
+            GROUP BY op.type
+        `, [userId]);
+
+        res.json({
+            success: true,
+            accuracy: {
+                overall: {
+                    userAccuracy: Math.round(userAccuracy * 100) / 100,
+                    oracleAccuracy: Math.round(oracleAccuracy * 100) / 100,
+                    totalPredictions: totalPredictions,
+                    userBeatsOracle: accuracy.user_beats_oracle || 0,
+                    oracleBeatsUser: accuracy.oracle_beats_user || 0
+                },
+                recent: { // Add recent accuracy data
+                    userAccuracy: Math.round(userAccuracy * 100) / 100,
+                    oracleAccuracy: Math.round(oracleAccuracy * 100) / 100,
+                    totalPredictions: totalPredictions
+                },
+                confidence: {
+                    averageUserConfidence: Math.round((accuracy.avg_user_confidence || 0) * 100) / 100,
+                    averageOracleConfidence: Math.round((accuracy.avg_oracle_confidence || 0) * 100) / 100
+                },
+                byCategory: categoryAccuracy.map(cat => ({
+                    type: cat.type,
+                    userAccuracy: cat.total_predictions > 0 ? Math.round((cat.user_correct / cat.total_predictions) * 10000) / 100 : 0,
+                    oracleAccuracy: cat.total_predictions > 0 ? Math.round((cat.oracle_correct / cat.total_predictions) * 10000) / 100 : 0,
+                    totalPredictions: cat.total_predictions
+                }))
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching accuracy metrics:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch accuracy metrics',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+/**
+ * GET /api/oracle/performance/monitoring
+ * Get performance monitoring data and database optimization status
+ */
+router.get('/performance/monitoring', requireAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+        console.log('📊 Retrieving Oracle performance monitoring data...');
+
+        // Get database optimization stats
+        const dbStats = await databaseOptimizationService.analyzeDatabasePerformance();
+        const recommendations = await databaseOptimizationService.getOptimizationRecommendations();
+
+        // Get basic cache statistics (simulated since we removed the direct import)
+        const cacheStats = {
+            predictions: { hits: 0, misses: 0, size: 0 },
+            analytics: { hits: 0, misses: 0, size: 0 },
+            users: { hits: 0, misses: 0, size: 0 },
+            queries: { hits: 0, misses: 0, size: 0 }
+        };
+
+        res.json({
+            success: true,
+            data: {
+                databaseStats: dbStats,
+                cacheStats,
+                recommendations,
+                monitoring: {
+                    uptime: process.uptime(),
+                    memoryUsage: process.memoryUsage(),
+                    nodeVersion: process.version,
+                    platform: process.platform
+                }
+            },
+            meta: {
+                generatedAt: new Date().toISOString(),
+                version: '1.0.0'
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Performance monitoring error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to retrieve performance monitoring data',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+/**
+ * POST /api/oracle/performance/optimize
+ * Run database optimization (indexes and VACUUM)
+ */
+router.post('/performance/optimize', requireAdmin, async (req: express.Request, res: express.Response) => {
+    try {
+        console.log('🔧 Starting Oracle database optimization...');
+
+        // Create optimized indexes
+        await databaseOptimizationService.createOptimizedIndexes();
+        
+        // Run database optimization
+        await databaseOptimizationService.optimizeDatabase();
+
+        res.json({
+            success: true,
+            data: {
+                message: 'Database optimization completed successfully',
+                optimizedAt: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Database optimization error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to optimize database',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
 
 export default router;

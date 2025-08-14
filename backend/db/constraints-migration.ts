@@ -355,7 +355,7 @@ export async function validateDatabaseIntegrity(): Promise<{
         console.error('❌ Database validation failed:', error);
         return {
             isValid: false,
-            errors: [`Validation failed: ${error.message}`],
+            errors: [`Validation failed: ${error instanceof Error ? error.message : String(error)}`],
             warnings
         };
     }

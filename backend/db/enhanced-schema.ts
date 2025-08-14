@@ -217,6 +217,25 @@ async function createEnhancedTables(): Promise<void> {
             expires_at DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE
+        )`,
+
+        // Real-time predictions table
+        `CREATE TABLE IF NOT EXISTS realtime_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            oracle_prediction_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            starts_at DATETIME NOT NULL,
+            FOREIGN KEY (oracle_prediction_id) REFERENCES enhanced_oracle_predictions (id) ON DELETE CASCADE
+        )`,
+
+        // Prediction submissions table
+        `CREATE TABLE IF NOT EXISTS prediction_submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            realtime_prediction_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (realtime_prediction_id) REFERENCES realtime_predictions (id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES simple_auth_users (id) ON DELETE CASCADE
         )`
     ];
 
@@ -285,15 +304,15 @@ async function createEnhancedIndexes(): Promise<void> {
 async function seedSimpleAuthUsers(): Promise<void> {
     try {
         // Check if we already have simple auth users
-        const userCount = await getRow('SELECT COUNT(*) as count FROM simple_auth_users');
+        const userCount = await getRow('SELECT COUNT(*) as count FROM simple_auth_users').catch(() => ({ count: 0 }));
         if (userCount.count > 0) {
             console.log('📊 Simple auth users already exist, skipping seed...');
             return;
         }
 
-        // Create admin user (player_number 0)
+        // Create admin user (player_number 0) - using INSERT OR IGNORE to avoid duplicates
         await runQuery(`
-            INSERT INTO simple_auth_users (
+            INSERT OR IGNORE INTO simple_auth_users (
                 player_number, username, pin_hash, is_admin, color_theme, emoji
             ) VALUES (?, ?, ?, ?, ?, ?)
         `, [0, 'Admin', '$2b$10$7347hash', true, '#DC2626', '👑']); // PIN: 7347
@@ -302,7 +321,7 @@ async function seedSimpleAuthUsers(): Promise<void> {
         const defaultPinHash = '$2b$10$0000hash'; // PIN: 0000
         for (let i = 1; i <= 10; i++) {
             await runQuery(`
-                INSERT INTO simple_auth_users (
+                INSERT OR IGNORE INTO simple_auth_users (
                     player_number, username, pin_hash, is_admin, color_theme, emoji
                 ) VALUES (?, ?, ?, ?, ?, ?)
             `, [i, `Player ${i}`, defaultPinHash, false, '#3B82F6', '👤']);
@@ -311,7 +330,7 @@ async function seedSimpleAuthUsers(): Promise<void> {
         console.log('🌱 Simple auth users seeded: 1 admin + 10 players');
     } catch (error) {
         console.error('❌ Simple auth user seeding failed:', error);
-        throw error;
+        // Don't throw the error, just log it
     }
 }
 

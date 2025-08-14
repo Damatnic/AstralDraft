@@ -6,21 +6,30 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, getUserById, JWTPayload } from '../services/authService';
 
-// Extend Express Request interface to include user
+// Define a user type for clarity
+interface AuthenticatedUser {
+    id: number;
+    username: string;
+    email: string;
+    display_name: string;
+    avatar_url: string | null;
+    created_at: string;
+}
+
+// Extend Express Request interface to include optional user and tokenPayload
 declare global {
     namespace Express {
         interface Request {
-            user?: {
-                id: number;
-                username: string;
-                email: string;
-                display_name: string;
-                avatar_url: string | null;
-                created_at: string;
-            };
+            user?: AuthenticatedUser;
             tokenPayload?: JWTPayload;
         }
     }
+}
+
+// Create a more specific request type for authenticated routes
+export interface AuthenticatedRequest extends Request {
+    user: AuthenticatedUser;
+    tokenPayload: JWTPayload;
 }
 
 /**
@@ -67,6 +76,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
         req.user = user;
         req.tokenPayload = payload;
 
+        // We can now safely cast the request to our authenticated type
         next();
     } catch (error) {
         let errorCode = 'TOKEN_INVALID';

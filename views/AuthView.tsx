@@ -4,12 +4,18 @@ import { motion } from 'framer-motion';
 import { useAppState } from '../contexts/AppContext';
 import { generateTeamBranding } from '../services/geminiService';
 import { LazyImage } from '../components/ui/LazyImage';
-import { AuthService } from '../services/authService';
+import { authService } from '../services/authService';
+import type { AuthResponse } from '../services/authService';
 import { SparklesIcon } from '../components/icons/SparklesIcon';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 
 type AuthMode = 'login' | 'register';
 
-const AuthView: React.FC = () => {
+interface AuthViewProps {
+  // No props currently needed, but interface ready for future expansion
+}
+
+const AuthView: React.FC<AuthViewProps> = () => {
     const { dispatch } = useAppState();
     const [mode, setMode] = React.useState<AuthMode>('login');
     const [formData, setFormData] = React.useState({
@@ -358,4 +364,10 @@ const AuthView: React.FC = () => {
     );
 };
 
-export default AuthView;
+const AuthViewWithErrorBoundary: React.FC<AuthViewProps> = (props) => (
+    <ErrorBoundary>
+        <AuthView {...props} />
+    </ErrorBoundary>
+);
+
+export default AuthViewWithErrorBoundary;

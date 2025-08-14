@@ -18,12 +18,17 @@ import PowerBalanceChart from '../components/dashboard/PowerBalanceChart';
 import CustomizeDashboardModal from '../components/dashboard/CustomizeDashboardModal';
 import WhatsNextWidget from '../components/dashboard/WhatsNextWidget';
 import PerformanceMetricsWidget from '../components/dashboard/PerformanceMetricsWidget';
+import ErrorBoundary from '../components/ui/ErrorBoundary';
 import ActivityFeedWidget from '../components/dashboard/ActivityFeedWidget';
 import { LayoutIcon } from '../components/icons/LayoutIcon';
 import OnTheHotSeatWidget from '../components/dashboard/OnTheHotSeatWidget';
 import { GlobeIcon } from '../components/icons/GlobeIcon';
 
-const DashboardView: React.FC = () => {
+interface DashboardViewProps {
+  // No props currently needed, but interface ready for future expansion
+}
+
+const DashboardView: React.FC<DashboardViewProps> = () => {
     const { state, dispatch } = useAppState();
     const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
     const [isEnhancedCreateModalOpen, setIsEnhancedCreateModalOpen] = React.useState(false);
@@ -53,10 +58,10 @@ const DashboardView: React.FC = () => {
                                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                                     <button 
                                         onMouseEnter={() => playHoverSound()}
-                                        onClick={() => setIsCreateModalOpen(true)}
+                                        onClick={() => dispatch({ type: 'SET_VIEW', payload: 'CREATE_LEAGUE' })}
                                         className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-gradient-to-r from-green-500 to-cyan-500 text-white font-bold rounded-lg btn-primary text-sm mobile-touch-target"
                                     >
-                                        Create League (Quick)
+                                        Create League (Wizard)
                                     </button>
                                     <button 
                                         onMouseEnter={() => playHoverSound()}
@@ -181,4 +186,10 @@ const DashboardView: React.FC = () => {
     );
 };
 
-export default DashboardView;
+const DashboardViewWithErrorBoundary: React.FC<DashboardViewProps> = (props) => (
+    <ErrorBoundary>
+        <DashboardView {...props} />
+    </ErrorBoundary>
+);
+
+export default DashboardViewWithErrorBoundary;

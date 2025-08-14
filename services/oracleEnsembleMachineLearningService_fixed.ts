@@ -1,6 +1,67 @@
 // Oracle Ensemble Machine Learning Service
 // Comprehensive ML pipeline with ensemble methods, validation, and monitoring
 
+// Core Training Data Interfaces
+export interface MLTrainingData {
+    id: string;
+    playerId?: string;
+    features: Record<string, any>;
+    target?: number;
+    timestamp: Date;
+    week?: number;
+    season?: number;
+    metadata?: Record<string, any>;
+}
+
+export interface FeatureVector {
+    [key: string]: number | string | boolean | number[] | any[];
+}
+
+export interface TrainingConfiguration {
+    algorithm: 'RANDOM_FOREST' | 'GRADIENT_BOOSTING' | 'NEURAL_NETWORK' | 'ENSEMBLE';
+    modelType?: 'ensemble' | 'single';
+    hyperparameters: Record<string, any>;
+    validationSplit: number;
+    trainingSplit?: number;
+    epochs?: number;
+    maxEpochs?: number;
+    batchSize?: number;
+    learningRate?: number; // Added for compatibility
+    earlyStoppingPatience?: number;
+    earlyStoppingEnabled?: boolean;
+    featureSelection?: boolean;
+    crossValidationFolds?: number;
+    crossValidationEnabled?: boolean;
+    hyperparameterTuningEnabled?: boolean;
+}
+
+export interface TrainingSession {
+    id: string;
+    name?: string;
+    startTime: Date | string;
+    endTime?: Date | string;
+    status: 'running' | 'completed' | 'failed' | 'cancelled' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    configuration: TrainingConfiguration;
+    datasetSize?: number;
+    progress: TrainingProgress;
+    metrics: Record<string, number>;
+    models?: string[];
+    error?: string;
+}
+
+export interface TrainingProgress {
+    phase: 'PREPROCESSING' | 'TRAINING' | 'VALIDATION' | 'OPTIMIZATION' | 'COMPLETED' | 'preparation' | 'training' | 'ensemble' | 'validation' | 'complete';
+    percentage: number;
+    currentStep: number;
+    totalSteps: number;
+    message: string;
+    metrics?: Record<string, number>;
+    currentModel?: string;
+    epoch?: number;
+    accuracy?: number;
+    loss?: number;
+}
+
 // Data Validation and Quality Metrics Interfaces
 export interface DataValidationRule {
     id: string;
@@ -400,6 +461,8 @@ class OracleEnsembleMachineLearningService {
                 totalSteps: this.calculateTotalSteps(config),
                 currentModel: 'Initializing',
                 phase: 'preparation',
+                percentage: 0,
+                message: 'Initializing training session',
                 accuracy: 0,
                 loss: 0
             },
@@ -1409,6 +1472,7 @@ class OracleEnsembleMachineLearningService {
         // This would typically load from localStorage or API
         // For now, return mock data with proper FeatureVector structure
         return Array.from({ length: 1000 }, (_, i) => ({
+            id: `training_${i}`,
             predictionId: `pred_${i}`,
             week: (i % 17) + 1,
             type: 'prediction',
@@ -1446,7 +1510,7 @@ class OracleEnsembleMachineLearningService {
                 weekType: ['REGULAR', 'PLAYOFF', 'CHAMPIONSHIP'][Math.floor(Math.random() * 3)] as 'REGULAR' | 'PLAYOFF' | 'CHAMPIONSHIP',
                 marketConfidence: Math.random()
             },
-            timestamp: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString()
+            timestamp: new Date(Date.now() - Math.random() * 86400000 * 30)
         }));
     }
 
@@ -1691,13 +1755,13 @@ class OracleEnsembleMachineLearningService {
         const polynomial: Record<string, number> = {};
         
         // Quadratic features
-        polynomial.playerRecentPerformance_squared = Math.pow(features.playerRecentPerformance[0] || 0, 2);
-        polynomial.playerTargetShare_squared = Math.pow(features.playerTargetShare || 0, 2);
-        polynomial.teamOffensiveRank_squared = Math.pow(features.teamOffensiveRank || 0, 2);
+        polynomial.playerRecentPerformance_squared = Math.pow(Number(features.playerRecentPerformance[0]) || 0, 2);
+        polynomial.playerTargetShare_squared = Math.pow(Number(features.playerTargetShare) || 0, 2);
+        polynomial.teamOffensiveRank_squared = Math.pow(Number(features.teamOffensiveRank) || 0, 2);
         
         // Square root features for diminishing returns
-        polynomial.playerRecentPerformance_sqrt = Math.sqrt(Math.abs(features.playerRecentPerformance[0] || 0));
-        polynomial.restDays_sqrt = Math.sqrt(Math.abs(features.restDays || 0));
+        polynomial.playerRecentPerformance_sqrt = Math.sqrt(Math.abs(Number(features.playerRecentPerformance[0]) || 0));
+        polynomial.restDays_sqrt = Math.sqrt(Math.abs(Number(features.restDays) || 0));
         
         return polynomial;
     }
@@ -1709,15 +1773,15 @@ class OracleEnsembleMachineLearningService {
         const interactions: Record<string, number> = {};
         
         // Player-team interactions
-        interactions.player_team_synergy = (features.playerTargetShare || 0) * (features.teamOffensiveRank || 0);
-        interactions.player_matchup_interaction = (features.playerRecentPerformance[0] || 0) * (features.playerMatchupDifficulty || 0);
+        interactions.player_team_synergy = Number(features.playerTargetShare || 0) * Number(features.teamOffensiveRank || 0);
+        interactions.player_matchup_interaction = Number(features.playerRecentPerformance[0] || 0) * Number(features.playerMatchupDifficulty || 0);
         
         // Weather-position interactions
-        const weatherScore = (features.weatherConditions?.[0] || 0);
-        interactions.weather_position_impact = weatherScore * (features.playerPositionRank || 0);
+        const weatherScore = Number(features.weatherConditions?.[0] || 0);
+        interactions.weather_position_impact = weatherScore * Number(features.playerPositionRank || 0);
         
         // Rest-travel interaction
-        interactions.rest_travel_fatigue = (features.restDays || 0) * (features.travelDistance || 0);
+        interactions.rest_travel_fatigue = Number(features.restDays || 0) * Number(features.travelDistance || 0);
         
         return interactions;
     }
@@ -1752,18 +1816,19 @@ class OracleEnsembleMachineLearningService {
         
         // Ceiling and floor calculations
         const recentPerf = features.playerRecentPerformance || [];
-        if (recentPerf.length > 0) {
-            fantasyFeatures.performance_ceiling = Math.max(...recentPerf);
-            fantasyFeatures.performance_floor = Math.min(...recentPerf);
+        if (Array.isArray(recentPerf) && recentPerf.length > 0) {
+            const perfNumbers = recentPerf.map(p => Number(p));
+            fantasyFeatures.performance_ceiling = Math.max(...perfNumbers);
+            fantasyFeatures.performance_floor = Math.min(...perfNumbers);
             fantasyFeatures.performance_range = fantasyFeatures.performance_ceiling - fantasyFeatures.performance_floor;
         }
         
         // Volume-efficiency metrics
-        fantasyFeatures.efficiency_score = (features.playerTargetShare || 0) / Math.max(features.playerPositionRank || 1, 1);
+        fantasyFeatures.efficiency_score = Number(features.playerTargetShare || 0) / Math.max(Number(features.playerPositionRank || 1), 1);
         
         // Matchup advantage
-        const offenseRank = features.teamOffensiveRank || 0;
-        const defenseRank = features.teamDefensiveRank || 0;
+        const offenseRank = Number(features.teamOffensiveRank || 0);
+        const defenseRank = Number(features.teamDefensiveRank || 0);
         fantasyFeatures.team_balance = Math.abs(offenseRank - defenseRank);
         
         // Game script probability
@@ -2374,15 +2439,10 @@ class OracleEnsembleMachineLearningService {
     private async engineerFeaturesForPrediction(features: FeatureVector): Promise<any> { 
         // Create mock MLTrainingData for feature engineering
         const mockTrainingData: MLTrainingData = {
-            predictionId: 'temp',
+            id: 'temp',
             week: 1,
-            type: 'prediction',
-            confidence: 0.5,
-            oracleChoice: 0,
-            actualResult: 0,
-            isCorrect: false,
             features,
-            timestamp: new Date().toISOString()
+            timestamp: new Date()
         };
         
         const engineeredData = await this.engineerFeatures([mockTrainingData]);

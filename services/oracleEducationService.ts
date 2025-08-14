@@ -847,7 +847,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Detailed analysis of scoring systems and their impact on predictions...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Scoring systems directly impact player value.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -857,14 +857,14 @@ const pprPoints = standardPoints + kuppStats.receptions;
         return {
             id: 'player-analysis',
             title: 'Advanced Player Analysis Techniques',
-            category: 'FANTASY_FUNDAMENTALS', 
+            category: 'FANTASY_FUNDAMENTALS',
             difficulty: 'ADVANCED',
             description: 'Learn Oracle\'s methods for evaluating player performance potential',
             estimatedReadTime: 18,
             content: {
                 introduction: 'Deep dive into player evaluation methodologies...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Player analysis involves more than just looking at box scores.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -879,9 +879,9 @@ const pprPoints = standardPoints + kuppStats.receptions;
             description: 'How Oracle processes data to generate predictions',
             estimatedReadTime: 22,
             content: {
-                introduction: 'Oracle uses sophisticated algorithms combining multiple analytical approaches...',
+                introduction: 'Oracle uses sophisticated algorithms combining multiple analytical approaches to create robust and reliable forecasts.',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Algorithms are the engines of Oracle\'s predictions.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -892,13 +892,13 @@ const pprPoints = standardPoints + kuppStats.receptions;
             id: 'data-sources',
             title: 'Oracle\'s Data Sources and Integration',
             category: 'PREDICTION_ALGORITHMS',
-            difficulty: 'INTERMEDIATE', 
+            difficulty: 'INTERMEDIATE',
             description: 'Understanding the data that powers Oracle predictions',
             estimatedReadTime: 16,
             content: {
                 introduction: 'Oracle integrates multiple data sources for comprehensive analysis...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['High-quality data is essential for accurate predictions.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -915,7 +915,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Oracle leverages advanced AI to process complex data relationships...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['AI helps uncover hidden patterns in the data.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -932,7 +932,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Statistical modeling forms the foundation of Oracle\'s analytical approach...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Statistical models help quantify uncertainty.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -949,7 +949,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Understanding probability theory helps interpret Oracle\'s confidence levels...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Probability is the language of uncertainty.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -966,7 +966,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Oracle uses advanced metrics beyond basic fantasy statistics...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Advanced metrics provide a deeper understanding of player performance.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -983,7 +983,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Machine learning enables Oracle to improve predictions over time...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Machine learning allows the system to learn from data.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -1000,7 +1000,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Feature engineering transforms raw data into predictive signals...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Feature engineering is a critical step in the machine learning pipeline.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -1017,7 +1017,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Oracle continuously optimizes models for better predictions...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Model optimization is key to maintaining a competitive edge.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -1034,7 +1034,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Advanced analytics combine multiple approaches for robust predictions...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Advanced analytics can provide a significant competitive advantage.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -1051,7 +1051,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Ensemble methods combine multiple prediction models...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Ensemble methods can improve prediction accuracy and robustness.']
             },
             lastUpdated: new Date().toISOString()
         };
@@ -1068,7 +1068,7 @@ const pprPoints = standardPoints + kuppStats.receptions;
             content: {
                 introduction: 'Market sentiment provides additional signals for Oracle predictions...',
                 sections: [],
-                keyTakeaways: []
+                keyTakeaways: ['Market sentiment can be a powerful contrarian indicator.']
             },
             lastUpdated: new Date().toISOString()
         };

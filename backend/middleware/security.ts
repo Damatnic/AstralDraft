@@ -23,6 +23,10 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
         legacyHeaders: false,
         // Store rate limit info in memory (fine for 10-20 users)
         skip: (req) => {
+            // Skip rate limiting for test environment
+            if (process.env.NODE_ENV === 'test') {
+                return true;
+            }
             // Skip rate limiting for health checks
             return req.path === '/health' || req.path === '/api/health';
         }
@@ -51,12 +55,14 @@ export const predictionRateLimit = createRateLimiter(
 );
 
 // Speed limiting for high-frequency requests
-export const speedLimiter = slowDown({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    delayAfter: 10, // Allow 10 requests per minute without delay
-    delayMs: 500, // Add 500ms delay per request after limit
-    maxDelayMs: 5000, // Maximum delay of 5 seconds
-});
+export const speedLimiter = process.env.NODE_ENV === 'test'
+    ? (req: Request, res: Response, next: NextFunction) => next() // Skip in test environment
+    : slowDown({
+        windowMs: 1 * 60 * 1000, // 1 minute
+        delayAfter: 10, // Allow 10 requests per minute without delay
+        delayMs: () => 500, // Add 500ms delay per request after limit
+        maxDelayMs: 5000, // Maximum delay of 5 seconds
+    });
 
 // CORS configuration for production
 export const corsConfig = cors({
@@ -140,10 +146,9 @@ export const authValidation = {
             .withMessage('Display name must be 1-50 characters')
     ],
     login: [
-        body('email')
-            .isEmail()
-            .normalizeEmail()
-            .withMessage('Please provide a valid email address'),
+        body('login')
+            .isLength({ min: 1 })
+            .withMessage('Username or email is required'),
         body('password')
             .isLength({ min: 1 })
             .withMessage('Password is required')
@@ -258,6 +263,7 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
         }));
 
         return res.status(400).json({
+            success: false,
             error: 'Validation failed',
             code: 'VALIDATION_ERROR',
             details: errorMessages,
@@ -389,21 +395,3 @@ export const ipWhitelist = (allowedIPs: string[]) => {
     };
 };
 
-export default {
-    generalRateLimit,
-    authRateLimit,
-    predictionRateLimit,
-    speedLimiter,
-    corsConfig,
-    securityHeaders,
-    authValidation,
-    predictionValidation,
-    analyticsValidation,
-    handleValidationErrors,
-    sanitizeInput,
-    sanitizeHtml,
-    securityLogger,
-    validateContentType,
-    requestSizeLimit,
-    ipWhitelist
-};

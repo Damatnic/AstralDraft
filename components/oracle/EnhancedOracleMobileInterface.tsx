@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/SimpleAuthContext';
 import { Widget } from '../ui/Widget';
 import { ZapIcon } from '../icons/ZapIcon';
 import { oracleApiClient } from '../../services/oracleApiClient';
+import { PredictionResponse } from '../../backend/routes/enhancedOracle';
 import { useOracleWebSocket, OracleWebSocketMessage } from '../../hooks/useOracleWebSocket';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useOracleNotifications } from '../../hooks/useOracleNotifications';
@@ -59,13 +60,11 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
     // Media queries for responsive design
     const isMobile = useMediaQuery('(max-width: 768px)');
     const isTablet = useMediaQuery('(min-width: 769px) and (max-width: 1024px)');
-    const isSmallMobile = useMediaQuery('(max-width: 480px)');
     
     // Mobile-specific state
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [touchState, setTouchState] = useState<MobileTouchState | null>(null);
     const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
-    const [isLongPress, setIsLongPress] = useState(false);
     const [showMobileFAB, setShowMobileFAB] = useState(true);
     
     // Core State
@@ -86,14 +85,9 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
         rank: 0
     });
 
-    // Notification system
+    // Notification system (only keeping used function)
     const {
-        scheduleDeadlineNotifications,
-        notifyPredictionResult,
-        notifyPredictionDeadline,
-        notifyAccuracyUpdate,
-        notifyStreakMilestone,
-        notifyRankingChange
+        notifyAccuracyUpdate
     } = useOracleNotifications();
 
     // Initialize mobile features
@@ -122,14 +116,12 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
         
         // Setup long press detection
         const longPressTimer = setTimeout(() => {
-            setIsLongPress(true);
             oracleMobileService.vibrate([50]); // Haptic feedback
         }, 500);
         
         // Clear timer on touch end
         const clearTimer = () => {
             clearTimeout(longPressTimer);
-            setIsLongPress(false);
         };
         
         e.currentTarget.addEventListener('touchend', clearTimer, { once: true });
@@ -194,35 +186,33 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
         return () => window.removeEventListener('scroll', handleScroll);
     }, [isMobile]);
 
-    // WebSocket Message Handler
-    const handleWebSocketMessage = useCallback((data: OracleWebSocketMessage) => {
-        switch (data.type) {
+    // Helper functions (moved before usage in dependencies)
+    const updatePrediction = useCallback((updatedPrediction: LivePrediction) => {
+        setPredictions(prev => 
+            prev.map(p => p.id === updatedPrediction.id ? updatedPrediction : p)
+        );
+    }, []);
+
+    const addRealtimeUpdate = useCallback((update: RealtimeUpdate) => {
+        setRealtimeUpdates(prev => [update, ...prev.slice(0, 9)]);
+    }, []);
+
+    // WebSocket message handler
+    const handleWebSocketMessage = useCallback((message: any) => {
+        switch (message.type) {
             case 'PREDICTION_UPDATE':
-                updatePrediction(data.prediction);
+                updatePrediction(message.data);
                 addRealtimeUpdate({
-                    id: `update-${Date.now()}`,
+                    id: Date.now().toString(),
                     type: 'PREDICTION_UPDATE',
-                    message: `Oracle updated prediction: ${data.prediction.question}`,
-                    timestamp: new Date().toISOString(),
-                    data: data.prediction
+                    message: `Updated ${message.data.playerName} prediction`,
+                    timestamp: new Date().toISOString()
                 });
                 break;
-
-            case 'USER_PREDICTION_SUBMITTED':
-                if (data.userId !== user?.id) {
-                    addRealtimeUpdate({
-                        id: `user-${Date.now()}`,
-                        type: 'USER_JOINED',
-                        message: `${data.username} submitted a prediction`,
-                        timestamp: new Date().toISOString()
-                    });
-                }
-                break;
-
             case 'ACCURACY_UPDATE':
-                if (data.userId === user?.id) {
-                    setUserStats(prev => ({ ...prev, accuracy: data.accuracy }));
-                    notifyAccuracyUpdate(data.accuracy, data.previousAccuracy || 0);
+                if (user?.id) {
+                    setUserStats(prev => ({ ...prev, accuracy: message.data.accuracy }));
+                    notifyAccuracyUpdate(message.data.accuracy, message.data.previousAccuracy || 0);
                 }
                 break;
         }
@@ -235,17 +225,6 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
         onMessage: handleWebSocketMessage
     });
 
-    // Helper functions
-    const updatePrediction = useCallback((updatedPrediction: LivePrediction) => {
-        setPredictions(prev => 
-            prev.map(p => p.id === updatedPrediction.id ? updatedPrediction : p)
-        );
-    }, []);
-
-    const addRealtimeUpdate = useCallback((update: RealtimeUpdate) => {
-        setRealtimeUpdates(prev => [update, ...prev.slice(0, 9)]);
-    }, []);
-
     // Load predictions
     useEffect(() => {
         loadPredictions();
@@ -256,9 +235,32 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
             setLoading(true);
             setError(null);
             
-            const data = await oracleApiClient.getWeeklyPredictions(week);
-            setPredictions(data.predictions);
-            setUserStats(data.userStats);
+            const response = await oracleApiClient.getWeeklyPredictions(week);
+            
+            // Transform PredictionResponse[] to LivePrediction[]
+            const livePredictions: LivePrediction[] = response.data.map((p: PredictionResponse) => ({
+                id: p.id,
+                question: p.question,
+                options: p.options.map((opt: string, idx: number) => ({
+                    text: opt,
+                    probability: 0.5 // Default probability
+                })),
+                oracleChoice: p.oracleChoice,
+                confidence: p.oracleConfidence, // Map oracleConfidence to confidence
+                reasoning: p.oracleReasoning,
+                participants: p.participantsCount,
+                timeRemaining: p.expiresAt ? new Date(p.expiresAt).getTime() - Date.now() : undefined,
+                consensusChoice: p.consensusChoice,
+                consensusConfidence: p.consensusConfidence,
+                userChoice: p.userSubmission?.choice,
+                userConfidence: p.userSubmission?.confidence,
+                isSubmitted: !!p.userSubmission
+            }));
+            
+            setPredictions(livePredictions);
+            
+            // Note: userStats would need to be fetched separately or the API response structure needs to be updated
+            // For now, we'll skip setting userStats from this response since it's not part of WeeklyPredictionsResponse
             
         } catch (err) {
             console.error('Failed to load predictions:', err);
@@ -460,7 +462,7 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
                 <div className="flex items-center space-x-1">
                     <Users className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-400">
-                        {predictions.reduce((total, p) => total + p.participantCount, 0)} active
+                        {predictions.reduce((total, p) => total + (p.participants || 0), 0)} active
                     </span>
                 </div>
             )}
@@ -574,7 +576,7 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
                                             <PredictionCard
                                                 key={prediction.id}
                                                 prediction={prediction}
-                                                onSelect={setSelectedPrediction}
+                                                onClick={() => setSelectedPrediction(prediction.id)}
                                                 isSelected={selectedPrediction === prediction.id}
                                                 className="transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
                                             />
@@ -614,7 +616,7 @@ const EnhancedOracleMobileInterface: React.FC<Props> = ({
 
                         {activeView === 'analytics' && (
                             <div className={`${isMobile ? 'p-4' : 'p-6'}`}>
-                                <OracleAnalyticsDashboard isMobile={isMobile} />
+                                <OracleAnalyticsDashboard />
                             </div>
                         )}
                     </motion.div>

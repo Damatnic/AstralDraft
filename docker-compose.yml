@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Frontend Application
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_PATH=/app/data/astral-draft.db
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - JWT_REFRESH_EXPIRES_IN=30d
+      - VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
+      - VITE_ESPN_API_KEY=${VITE_ESPN_API_KEY}
+      - VITE_NFL_API_KEY=${VITE_NFL_API_KEY}
+      - VITE_ODDS_API_KEY=${VITE_ODDS_API_KEY}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # WebSocket Server for Real-time Features
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: node backend/draftWebSocketServer.js
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - WS_PORT=3002
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Database Backup Service
+  db-backup:
+    image: alpine:latest
+    volumes:
+      - ./data:/data
+      - ./backups:/backups
+    command: >
+      sh -c "
+        apk add --no-cache sqlite &&
+        while true; do
+          sqlite3 /data/astral-draft.db '.backup /backups/astral-draft-$(date +%Y%m%d-%H%M%S).db' &&
+          find /backups -name '*.db' -mtime +7 -delete &&
+          sleep 86400
+        done
+      "
+    restart: unless-stopped
+
+  # Reverse Proxy & SSL Termination
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+      - websocket
+    restart: unless-stopped
+
+volumes:
+  node_modules:
+  data:
+  logs:
+  backups:

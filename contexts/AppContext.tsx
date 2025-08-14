@@ -1,9 +1,6 @@
 
 import * as React from 'react';
-import type { League, User, View, AppState, ChatMessage, DraftEvent, PlayerNote, Player, Team, DraftPick, Notification, AuctionState, TradeOffer, WaiverClaim, Matchup, MatchupPlayer, MatchupTeam, LeagueHistoryEntry, AiProfileData, CreateLeaguePayload, PlayerPosition, WatchlistInsight, Persona, CustomRanking, LeaguePoll, Announcement, Badge, TopRivalry, LeagueInvitation, ActivityItem, DirectMessage, ChampionshipProbability, DraftPickAsset, DraftCommentaryItem, RecapVideoScene, SideBet, SmartFaabAdvice, GamedayEvent, PlayerAwardType, PlayerAward, NewspaperContent, LeagueSettings } from '../types';
-import { players } from '../data/players';
-import { showNotification } from '../utils/notifications';
-import { calculateStreak } from '../utils/streaks';
+import type { League, User, View, AppState, ChatMessage, DraftEvent, Player, Team, DraftPick, Notification, AuctionState, TradeOffer, WaiverClaim, CreateLeaguePayload, PlayerPosition, WatchlistInsight, Persona, CustomRanking, LeaguePoll, Announcement, Badge, TopRivalry, LeagueInvitation, DraftPickAsset, DraftCommentaryItem, RecapVideoScene, SideBet, SmartFaabAdvice, GamedayEvent, PlayerAwardType, PlayerAward, NewspaperContent, LeagueSettings } from '../types';
 
 // NOTE FOR BACKEND MIGRATION:
 // All state is now managed in-memory. When the application loads, it starts with a clean slate.
@@ -177,11 +174,12 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 ...initialState,
                 isLoading: false,
             };
-        case 'TOGGLE_THEME':
+        case 'TOGGLE_THEME': {
             // This is a local UI setting, no API call needed.
             const newTheme = state.theme === 'dark' ? 'light' : 'dark';
             document.documentElement.className = newTheme;
             return { ...state, theme: newTheme };
+        }
         case 'PROPOSE_SIDE_BET': {
             // API_CALL: apiClient.proposeSideBet(leagueId, bet)
             const { leagueId, bet } = action.payload;
@@ -402,7 +400,7 @@ const appReducer = (state: AppState, action: Action): AppState => {
         }
         case 'CREATE_MOCK_DRAFT': {
             // This is a client-side action, no API call needed.
-            const { id, name, settings } = action.payload;
+            const { settings } = action.payload;
             const personas: Persona[] = ['The Analyst', 'The Gambler', 'The Trash Talker', 'The Cagey Veteran', 'The Homer', 'The Enforcer'];
             const userTeam: Team = {
                 id: 1, name: 'My Mock Team', owner: state.user, avatar: '🎓',
@@ -445,9 +443,10 @@ const appReducer = (state: AppState, action: Action): AppState => {
                 leagues: state.leagues.map(league => {
                     if (league.id === leagueId) {
                         const otherAwards = (league.playerAwards || []).filter(award => !(award.awardedByTeamId === teamId && award.season === currentSeason));
-                        const newAwards: PlayerAward[] = awards.filter(a => a.playerId !== null).map(a => ({
+                        const validAwards = awards.filter((a): a is typeof a & { playerId: number } => a.playerId !== null);
+                        const newAwards: PlayerAward[] = validAwards.map(a => ({
                             id: `award_${teamId}_${a.awardType}_${currentSeason}`, awardType: a.awardType,
-                            playerId: a.playerId!, season: currentSeason, awardedByTeamId: teamId,
+                            playerId: a.playerId, season: currentSeason, awardedByTeamId: teamId,
                         }));
                         return { ...league, playerAwards: [...otherAwards, ...newAwards] };
                     }
@@ -508,8 +507,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   //   }
   // }, []);
 
+  const contextValue = React.useMemo(() => ({ state, dispatch }), [state, dispatch]);
+
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

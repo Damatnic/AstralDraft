@@ -164,13 +164,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (storedToken && storedUser) {
                     try {
                         // Verify stored session is still valid
-                        const isValid = await authService.getCurrentUser();
+                        const currentUser = authService.getCurrentUser();
                         
-                        if (isValid.success && isValid.user) {
+                        if (currentUser) {
                             dispatch({
                                 type: 'AUTH_SUCCESS',
                                 payload: {
-                                    user: isValid.user,
+                                    user: currentUser,
                                     sessionToken: storedToken,
                                 },
                             });
@@ -205,12 +205,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             const result = await authService.login(email, password);
             
-            if (result.success && result.user && result.session_token) {
+            if (result.success && result.data) {
                 dispatch({
                     type: 'AUTH_SUCCESS',
                     payload: {
-                        user: result.user,
-                        sessionToken: result.session_token,
+                        user: result.data.user,
+                        sessionToken: result.data.session_token,
                     },
                 });
             } else {
@@ -239,12 +239,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             const result = await authService.register(username, email, password, displayName);
             
-            if (result.success && result.user && result.session_token) {
+            if (result.success && result.data) {
                 dispatch({
                     type: 'AUTH_SUCCESS',
                     payload: {
-                        user: result.user,
-                        sessionToken: result.session_token,
+                        user: result.data.user,
+                        sessionToken: result.data.session_token,
                     },
                 });
             } else {
@@ -283,15 +283,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             const result = await authService.updateProfile(updates);
             
-            if (result.success && result.user) {
-                dispatch({
-                    type: 'USER_UPDATE',
-                    payload: result.user,
-                });
+            if (result) {
+                const updatedUser = authService.getCurrentUser();
+                if (updatedUser) {
+                    dispatch({
+                        type: 'USER_UPDATE',
+                        payload: updatedUser,
+                    });
+                }
             } else {
                 dispatch({
                     type: 'AUTH_FAILURE',
-                    payload: result.error || 'Profile update failed',
+                    payload: 'Profile update failed',
                 });
             }
         } catch (error) {
@@ -310,13 +313,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Check auth function for manual validation
     const checkAuth = async (): Promise<void> => {
         try {
-            const result = await authService.getCurrentUser();
+            const currentUser = authService.getCurrentUser();
             
-            if (result.success && result.user) {
+            if (currentUser) {
                 // Auth is valid, update user data
                 dispatch({
                     type: 'USER_UPDATE',
-                    payload: result.user,
+                    payload: currentUser,
                 });
             } else {
                 // Auth is invalid, logout

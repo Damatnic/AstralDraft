@@ -14,7 +14,7 @@ export interface MLTrainingData {
 }
 
 export interface FeatureVector {
-    [key: string]: number | string | boolean;
+    [key: string]: number | string | boolean | number[] | any[];
 }
 
 export interface TrainingConfiguration {

@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  clearMocks: true,
   // Don't load React test setup for backend tests
   // setupFilesAfterEnv: [], 
   moduleNameMapper: {
