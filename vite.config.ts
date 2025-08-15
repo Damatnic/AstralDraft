@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
     // Removed duplicate chunk logic to prevent conflicts - using inline logic in build.rollupOptions.output.manualChunks
     
     return {
+      base: isProduction ? './' : '/',
       plugins: [
         react(),
         // Copy service worker to dist folder - only during build
@@ -126,7 +127,11 @@ export default defineConfig(({ mode }) => {
         // Report compressed file sizes
         reportCompressedSize: true,
         // Cleanup output directory
-        emptyOutDir: true
+        emptyOutDir: true,
+        // Additional production optimizations for Netlify
+        assetsDir: 'assets',
+        // Ensure proper MIME types for all assets
+        copyPublicDir: true
       },
       // Critical dependency optimization for React
       optimizeDeps: {
@@ -153,6 +158,8 @@ export default defineConfig(({ mode }) => {
           keepNames: true
         }
       },
+      // Public directory configuration
+      publicDir: 'public',
       // Enhanced caching strategy
       cacheDir: 'node_modules/.vite',
       // Server configuration
