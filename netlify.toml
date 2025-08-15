@@ -7,6 +7,12 @@
   NODE_VERSION = "20"
   NPM_VERSION = "10"
 
+# Functions Configuration
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@neondatabase/serverless", "pg", "pg-pool", "bcryptjs", "jsonwebtoken"]
+  included_files = ["backend/**", "netlify/functions/**"]
+
 # API Redirects - Route all API calls to Netlify Functions
 [[redirects]]
   from = "/api/*"

@@ -69,6 +69,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@google/genai": "^1.9.0",
     "@neondatabase/serverless": "^1.0.1",
+    "@netlify/functions": "^4.2.1",
     "@stripe/react-stripe-js": "^3.9.0",
     "@stripe/stripe-js": "^7.8.0",
     "@types/bcryptjs": "^2.4.6",

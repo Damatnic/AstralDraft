@@ -4,8 +4,6 @@
  */
 
 import { neon, neonConfig, Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
-import * as schema from './schema';
 
 // Configure Neon for serverless environments
 neonConfig.fetchConnectionCache = true;
@@ -31,9 +29,6 @@ export const pool = new Pool({
 
 // Create serverless SQL client for Netlify Functions
 export const sql = neon(DATABASE_URL);
-
-// Drizzle ORM instance (optional, for type-safe queries)
-export const db = drizzle(sql, { schema });
 
 // Connection test function
 export async function testConnection() {
@@ -262,7 +257,6 @@ export async function closeConnection() {
 export default {
   sql,
   pool,
-  db,
   testConnection,
   initializeDatabase,
   closeConnection

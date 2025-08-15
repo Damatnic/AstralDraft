@@ -4,10 +4,15 @@
  */
 
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
-import { sql } from '../../backend/db/neonConfig';
+import { neon } from '@neondatabase/serverless';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
+
+// Database connection
+const DATABASE_URL = process.env.DATABASE_URL || 
+  'postgresql://neondb_owner:npg_f4RsDM1onJAq@ep-red-glitter-aea4mz96-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+const sql = neon(DATABASE_URL);
 
 // JWT Configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'astral-draft-secret-change-in-production';
