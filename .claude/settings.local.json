@@ -23,7 +23,8 @@
       "Bash(curl:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npm run setup:database:*)"
     ],
     "deny": [],
     "ask": [],

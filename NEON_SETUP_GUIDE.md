@@ -130,9 +130,9 @@ JWT_SECRET=your-super-secure-jwt-secret-min-32-chars-change-this
 GEMINI_API_KEY=AIzaSyDe5G8D7nRiSlGZPJ1Qcg9XBqBWPDf7b8g
 SPORTSIO_API_KEY=4ce0ac2e8bb74eacbc9ba951c84e3bfa
 
-# Frontend URLs (update with your Netlify URL)
-VITE_API_BASE_URL=https://astral-draft.netlify.app/api
-VITE_WEBSOCKET_URL=wss://astral-draft.netlify.app
+# Frontend URLs
+VITE_API_BASE_URL=https://astraldraft.netlify.app/api
+VITE_WEBSOCKET_URL=wss://astraldraft.netlify.app
 ```
 
 ### Optional Variables:
