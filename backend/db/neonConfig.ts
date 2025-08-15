@@ -11,7 +11,8 @@ import * as schema from './schema';
 neonConfig.fetchConnectionCache = true;
 
 // Database connection URL from environment
-const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || 
+  'postgresql://neondb_owner:npg_f4RsDM1onJAq@ep-red-glitter-aea4mz96-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require';
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL or NEON_DATABASE_URL environment variable is required');
