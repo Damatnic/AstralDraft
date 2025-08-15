@@ -5,62 +5,65 @@
 import React from 'react';
 import { AppProvider, useAppState } from './contexts/AppContext';
 import { AuthProvider, AuthInitializer } from './contexts/AuthContext';
-import DashboardView from './views/DashboardView';
+// Eager load only the most critical views that users will likely visit first
 import EnhancedDashboardView from './views/EnhancedDashboardView';
-import LeagueHubView from './views/LeagueHubView';
-import TeamHubView from './views/TeamHubView';
-import HistoricalAnalyticsOverview from './views/HistoricalAnalyticsOverview';
-import LeagueStandingsView from './views/LeagueStandingsView';
-import WaiverWireView from './views/WaiverWireView';
-import MatchupView from './views/MatchupView';
-import PowerRankingsView from './views/PowerRankingsView';
-import PlayoffBracketView from './views/PlayoffBracketView';
-import WeeklyReportView from './views/WeeklyReportView';
-import DraftStoryView from './views/DraftStoryView';
+import AuthView from './views/AuthView';
+
+// Lazy load all other views for better initial bundle size
+const DashboardView = React.lazy(() => import('./views/DashboardView'));
+const LeagueHubView = React.lazy(() => import('./views/LeagueHubView'));
+const TeamHubView = React.lazy(() => import('./views/TeamHubView'));
+const HistoricalAnalyticsOverview = React.lazy(() => import('./views/HistoricalAnalyticsOverview'));
+const LeagueStandingsView = React.lazy(() => import('./views/LeagueStandingsView'));
+const WaiverWireView = React.lazy(() => import('./views/WaiverWireView'));
+const MatchupView = React.lazy(() => import('./views/MatchupView'));
+const PowerRankingsView = React.lazy(() => import('./views/PowerRankingsView'));
+const PlayoffBracketView = React.lazy(() => import('./views/PlayoffBracketView'));
+const WeeklyReportView = React.lazy(() => import('./views/WeeklyReportView'));
+const DraftStoryView = React.lazy(() => import('./views/DraftStoryView'));
 import { AnimatePresence, motion } from 'framer-motion';
 import NotificationManager from './components/ui/NotificationManager';
-import SeasonReviewView from './views/SeasonReviewView';
-import StartSitToolView from './views/StartSitToolView';
-import AssistantView from './views/AssistantView';
+const SeasonReviewView = React.lazy(() => import('./views/SeasonReviewView'));
+const StartSitToolView = React.lazy(() => import('./views/StartSitToolView'));
+const AssistantView = React.lazy(() => import('./views/AssistantView'));
 import { ErrorBoundary } from './components/core/ErrorBoundary';
 import { InstallPrompt, PWAStatusBanner } from './components/ui/InstallPrompt';
-import ProfileView from './views/ProfileView';
-import LeagueCreationWizard from './components/league/LeagueCreationWizard';
-import LeagueRulesView from './views/LeagueRulesView';
-import ManagerView from './views/ManagerView';
+const ProfileView = React.lazy(() => import('./views/ProfileView'));
+const LeagueCreationWizard = React.lazy(() => import('./components/league/LeagueCreationWizard'));
+const LeagueRulesView = React.lazy(() => import('./views/LeagueRulesView'));
+const ManagerView = React.lazy(() => import('./views/ManagerView'));
 import VoiceCommandButton from './components/core/VoiceCommandButton';
-import EditRosterView from './views/EditRosterView';
-import DraftPrepCenterView from './views/DraftPrepCenterView';
-import SeasonStoryView from './views/SeasonStoryView';
-import PlayerDetailModal from './components/player/PlayerDetailModal';
+const EditRosterView = React.lazy(() => import('./views/EditRosterView'));
+const DraftPrepCenterView = React.lazy(() => import('./views/DraftPrepCenterView'));
+const SeasonStoryView = React.lazy(() => import('./views/SeasonStoryView'));
+const PlayerDetailModal = React.lazy(() => import('./components/player/PlayerDetailModal'));
 import { View } from './types';
-import TeamComparisonView from './views/TeamComparisonView';
-import MobileNavMenu from './components/core/MobileNavMenu';
-import MainLayout from './components/layout/MainLayout';
-import EditLeagueSettingsView from './views/EditLeagueSettingsView';
-import SeasonArchiveView from './views/SeasonArchiveView';
-import LeagueStatsView from './views/LeagueStatsView';
+const TeamComparisonView = React.lazy(() => import('./views/TeamComparisonView'));
+const MobileNavMenu = React.lazy(() => import('./components/core/MobileNavMenu'));
+const MainLayout = React.lazy(() => import('./components/layout/MainLayout'));
+const EditLeagueSettingsView = React.lazy(() => import('./views/EditLeagueSettingsView'));
+const SeasonArchiveView = React.lazy(() => import('./views/SeasonArchiveView'));
+const LeagueStatsView = React.lazy(() => import('./views/LeagueStatsView'));
 import { initializeGlobalFormEnhancement } from './utils/mobileFormEnhancement';
-import ScheduleManagementView from './views/ScheduleManagementView';
-import MessagesView from './views/MessagesView';
-import ChampionshipOddsView from './views/ChampionshipOddsView';
-import ProjectedStandingsView from './views/ProjectedStandingsView';
-import TrophyRoomView from './views/TrophyRoomView';
-import FinanceTrackerView from './views/FinanceTrackerView';
-import CustomScoringEditorView from './views/CustomScoringEditorView';
+const ScheduleManagementView = React.lazy(() => import('./views/ScheduleManagementView'));
+const MessagesView = React.lazy(() => import('./views/MessagesView'));
+const ChampionshipOddsView = React.lazy(() => import('./views/ChampionshipOddsView'));
+const ProjectedStandingsView = React.lazy(() => import('./views/ProjectedStandingsView'));
+const TrophyRoomView = React.lazy(() => import('./views/TrophyRoomView'));
+const FinanceTrackerView = React.lazy(() => import('./views/FinanceTrackerView'));
+const CustomScoringEditorView = React.lazy(() => import('./views/CustomScoringEditorView'));
 import { performanceMonitoringService } from './services/performanceMonitoringService';
-import { WeeklyRecapVideoView } from './views/WeeklyRecapVideoView';
-import LeagueConstitutionView from './views/LeagueConstitutionView';
-import GamedayHostView from './views/GamedayHostView';
-import LeagueNewspaperView from './views/LeagueNewspaperView';
-import KeeperSelectionView from './views/KeeperSelectionView';
-import AuthView from './views/AuthView';
-import OpenLeaguesView from './views/OpenLeaguesView';
-import LeaderboardView from './views/LeaderboardView';
-import LiveDraftRoomView from './views/LiveDraftRoomView';
-import SeasonContestView from './views/SeasonContestView';
-import MobileLayoutWrapper from './components/mobile/MobileLayoutWrapper';
-import MobileOfflineIndicator from './components/mobile/MobileOfflineIndicator';
+const WeeklyRecapVideoView = React.lazy(() => import('./views/WeeklyRecapVideoView'));
+const LeagueConstitutionView = React.lazy(() => import('./views/LeagueConstitutionView'));
+const GamedayHostView = React.lazy(() => import('./views/GamedayHostView'));
+const LeagueNewspaperView = React.lazy(() => import('./views/LeagueNewspaperView'));
+const KeeperSelectionView = React.lazy(() => import('./views/KeeperSelectionView'));
+const OpenLeaguesView = React.lazy(() => import('./views/OpenLeaguesView'));
+const LeaderboardView = React.lazy(() => import('./views/LeaderboardView'));
+const LiveDraftRoomView = React.lazy(() => import('./views/LiveDraftRoomView'));
+const SeasonContestView = React.lazy(() => import('./views/SeasonContestView'));
+const MobileLayoutWrapper = React.lazy(() => import('./components/mobile/MobileLayoutWrapper'));
+const MobileOfflineIndicator = React.lazy(() => import('./components/mobile/MobileOfflineIndicator'));
 import { useMediaQuery } from './hooks/useMediaQuery';
 import './styles/mobile-touch-targets.css';
 import './styles/mobile-form-optimization.css';
@@ -69,6 +72,7 @@ import './styles/mobile-responsive.css';
 import './styles/mobile-advanced.css';
 import './styles/mobile-layout.css';
 import './styles/mobile-accessibility.css';
+import CrisisInterventionWidget from './components/crisis/CrisisInterventionWidget';
 
 // Dynamic imports for lazy loading
 const LazyLeagueHistoryView = React.lazy(() => import('./views/LeagueHistoryView'));
@@ -358,6 +362,7 @@ const AppContent: React.FC = () => {
             <VoiceCommandButton />
             <InstallPrompt />
             <PWAStatusBanner />
+            <CrisisInterventionWidget />
              <AnimatePresence>
                 {state.activePlayerDetail && (
                     <PlayerDetailModal

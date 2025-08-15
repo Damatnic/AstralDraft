@@ -5,6 +5,7 @@
 
 import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { getRow, runQuery } from '../db/index';
 
 // JWT Configuration
@@ -30,6 +31,7 @@ export interface AuthTokens {
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
+    tokenFamily?: string;
 }
 
 export interface AuthResult {
@@ -42,6 +44,8 @@ export interface JWTPayload {
     username: string;
     email: string;
     type: 'access' | 'refresh';
+    tokenFamily?: string;
+    tokenId?: string;
     iat?: number;
     exp?: number;
 }
@@ -65,25 +69,31 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 /**
- * Generate JWT access and refresh tokens
+ * Generate JWT access and refresh tokens with token family for rotation
  */
-export function generateTokens(user: User): AuthTokens {
+export function generateTokens(user: User, tokenFamily?: string): AuthTokens {
+    // Generate token family if not provided (for new login)
+    const family = tokenFamily || randomBytes(32).toString('hex');
+    const tokenId = randomBytes(16).toString('hex');
+    
     const payload: Omit<JWTPayload, 'type' | 'iat' | 'exp'> = {
         userId: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        tokenFamily: family,
+        tokenId
     };
 
     const accessToken = jwt.sign(
         { ...payload, type: 'access' },
         JWT_SECRET,
-        { expiresIn: '7d' } // Use literal string
+        { expiresIn: '15m' } // Reduced to 15 minutes for better security
     );
 
     const refreshToken = jwt.sign(
         { ...payload, type: 'refresh' },
         JWT_SECRET,
-        { expiresIn: '30d' } // Use literal string
+        { expiresIn: '30d' }
     );
 
     // Calculate expiration time for access token
@@ -93,7 +103,8 @@ export function generateTokens(user: User): AuthTokens {
     return {
         accessToken,
         refreshToken,
-        expiresIn
+        expiresIn,
+        tokenFamily: family
     };
 }
 
@@ -145,11 +156,19 @@ export async function authenticateUser(login: string, password: string): Promise
     // Generate tokens
     const tokens = generateTokens(user);
 
-    // Store refresh token in database
+    // Store refresh token with family in database
     await runQuery(`
-        INSERT OR REPLACE INTO user_sessions (user_id, refresh_token, expires_at, created_at)
-        VALUES (?, ?, datetime('now', '+30 days'), CURRENT_TIMESTAMP)
-    `, [user.id, tokens.refreshToken]);
+        INSERT OR REPLACE INTO user_sessions (
+            user_id, 
+            refresh_token, 
+            token_family,
+            expires_at, 
+            created_at,
+            device_info,
+            ip_address
+        )
+        VALUES (?, ?, ?, datetime('now', '+30 days'), CURRENT_TIMESTAMP, 'web', 'unknown')
+    `, [user.id, tokens.refreshToken, tokens.tokenFamily]);
 
     return {
         user: {
@@ -219,11 +238,19 @@ export async function registerUser(
     // Generate tokens
     const tokens = generateTokens(newUser);
 
-    // Store refresh token
+    // Store refresh token with family
     await runQuery(`
-        INSERT INTO user_sessions (user_id, refresh_token, expires_at, created_at)
-        VALUES (?, ?, datetime('now', '+30 days'), CURRENT_TIMESTAMP)
-    `, [newUser.id, tokens.refreshToken]);
+        INSERT INTO user_sessions (
+            user_id, 
+            refresh_token, 
+            token_family,
+            expires_at, 
+            created_at,
+            device_info,
+            ip_address
+        )
+        VALUES (?, ?, ?, datetime('now', '+30 days'), CURRENT_TIMESTAMP, 'web', 'unknown')
+    `, [newUser.id, tokens.refreshToken, tokens.tokenFamily]);
 
     return {
         user: {
@@ -239,24 +266,44 @@ export async function registerUser(
 }
 
 /**
- * Refresh access token using refresh token
+ * Refresh access token using refresh token with rotation
  */
 export async function refreshAccessToken(refreshToken: string): Promise<AuthTokens> {
     // Verify refresh token
-    const payload = verifyToken(refreshToken);
+    let payload: JWTPayload;
+    try {
+        payload = verifyToken(refreshToken);
+    } catch (error) {
+        // Token might be expired or invalid
+        throw new Error('Invalid or expired refresh token');
+    }
     
     if (payload.type !== 'refresh') {
-        throw new Error('Invalid refresh token');
+        throw new Error('Invalid refresh token type');
     }
 
-    // Check if refresh token exists in database and is not expired
+    // Check if refresh token exists in database and get token family
     const session = await getRow(`
-        SELECT user_id FROM user_sessions 
+        SELECT user_id, token_family, is_revoked 
+        FROM user_sessions 
         WHERE refresh_token = ? AND expires_at > CURRENT_TIMESTAMP
     `, [refreshToken]);
 
     if (!session) {
+        // Token doesn't exist - possible token reuse attack
+        if (payload.tokenFamily) {
+            // Revoke all tokens in this family for security
+            await revokeTokenFamily(payload.tokenFamily);
+            console.error('Possible token reuse attack detected. Revoking token family:', payload.tokenFamily);
+        }
         throw new Error('Refresh token has expired or is invalid');
+    }
+
+    if (session.is_revoked) {
+        // Token was already used - possible attack
+        await revokeTokenFamily(session.token_family);
+        console.error('Attempted reuse of revoked token. Revoking token family:', session.token_family);
+        throw new Error('Refresh token has been revoked - possible security breach');
     }
 
     // Get user data
@@ -270,17 +317,42 @@ export async function refreshAccessToken(refreshToken: string): Promise<AuthToke
         throw new Error('User not found or inactive');
     }
 
-    // Generate new tokens
-    const tokens = generateTokens(user);
+    // Generate new tokens with same family
+    const tokens = generateTokens(user, session.token_family);
 
-    // Update refresh token in database
+    // Mark old refresh token as revoked and insert new one
     await runQuery(`
         UPDATE user_sessions 
-        SET refresh_token = ?, expires_at = datetime('now', '+30 days'), updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = ? AND refresh_token = ?
-    `, [tokens.refreshToken, user.id, refreshToken]);
+        SET is_revoked = 1, revoked_at = CURRENT_TIMESTAMP
+        WHERE refresh_token = ?
+    `, [refreshToken]);
+
+    await runQuery(`
+        INSERT INTO user_sessions (
+            user_id, 
+            refresh_token, 
+            token_family,
+            expires_at, 
+            created_at,
+            device_info,
+            ip_address,
+            parent_token
+        )
+        VALUES (?, ?, ?, datetime('now', '+30 days'), CURRENT_TIMESTAMP, 'web', 'unknown', ?)
+    `, [user.id, tokens.refreshToken, session.token_family, refreshToken]);
 
     return tokens;
+}
+
+/**
+ * Revoke all tokens in a token family (for security breach scenarios)
+ */
+export async function revokeTokenFamily(tokenFamily: string): Promise<void> {
+    await runQuery(`
+        UPDATE user_sessions 
+        SET is_revoked = 1, revoked_at = CURRENT_TIMESTAMP
+        WHERE token_family = ? AND is_revoked = 0
+    `, [tokenFamily]);
 }
 
 /**
@@ -415,11 +487,35 @@ export async function changeUserPassword(
 }
 
 /**
- * Clean up expired sessions
+ * Clean up expired and revoked sessions
  */
 export async function cleanupExpiredSessions(): Promise<void> {
+    // Delete expired sessions
     await runQuery(`
         DELETE FROM user_sessions 
         WHERE expires_at < CURRENT_TIMESTAMP
     `);
+    
+    // Delete old revoked sessions (keep for 7 days for audit)
+    await runQuery(`
+        DELETE FROM user_sessions 
+        WHERE is_revoked = 1 AND revoked_at < datetime('now', '-7 days')
+    `);
+}
+
+/**
+ * Validate session fingerprint for additional security
+ */
+export async function validateSessionFingerprint(
+    userId: number,
+    fingerprint: string
+): Promise<boolean> {
+    const session = await getRow(`
+        SELECT fingerprint FROM user_sessions
+        WHERE user_id = ? AND is_revoked = 0 AND expires_at > CURRENT_TIMESTAMP
+        ORDER BY created_at DESC
+        LIMIT 1
+    `, [userId]);
+    
+    return session?.fingerprint === fingerprint;
 }

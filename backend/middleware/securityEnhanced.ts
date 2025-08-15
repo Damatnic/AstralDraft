@@ -1,9 +1,16 @@
 /**
  * Enhanced Security Middleware
- * Comprehensive authentication security with account lockout, rate limiting, and audit logging
+ * Comprehensive authentication security with account lockout, rate limiting, XSS protection,
+ * input sanitization, and audit logging
  */
 
 import rateLimit from 'express-rate-limit';
+import slowDown from 'express-slow-down';
+import helmet from 'helmet';
+import { body, param, query, validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
+import validator from 'validator';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Account lockout tracking
 const accountLocks = new Map<number, { lockedUntil: number; attempts: number }>();
@@ -14,20 +21,151 @@ const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
 const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 minutes
 
+// XSS and injection protection patterns
+const MALICIOUS_PATTERNS = [
+    /(<script[\s\S]*?>[\s\S]*?<\/script>)/gi,
+    /(javascript:|vbscript:|data:text\/html)/gi,
+    /(union\s+select|drop\s+table|insert\s+into|delete\s+from)/gi,
+    /(exec\s*\(|eval\s*\()/gi,
+    /(\.\.\/)|(\.\.\\/g, // Path traversal
+    /(cmd\s*=|command\s*=|exec\s*=)/gi,
+    /(<iframe|<object|<embed|<applet)/gi,
+    /(onclick|onerror|onload|onmouseover)\s*=/gi
+];
+
+/**
+ * Enhanced input sanitization for XSS protection
+ */
+export const sanitizeInput = (input: any): string => {
+    if (typeof input !== 'string') return '';
+    
+    // Use validator.js for comprehensive sanitization
+    let sanitized = validator.escape(input);
+    sanitized = validator.stripLow(sanitized, { keep_new_lines: true });
+    
+    // Additional SQL injection protection
+    sanitized = sanitized
+        .replace(/(['";\\])/g, '\\$1') // Escape special characters
+        .replace(/--/g, '') // Remove SQL comments
+        .replace(/\/\*/g, '') // Remove multi-line comment start
+        .replace(/\*\//g, '') // Remove multi-line comment end
+        .replace(/xp_/gi, '') // Remove extended stored procedure prefix
+        .replace(/sp_/gi, '') // Remove stored procedure prefix
+        .replace(/exec(\s|\()/gi, '') // Remove exec statements
+        .replace(/union(\s)/gi, '') // Remove union statements
+        .replace(/select(\s)/gi, '') // Remove select statements
+        .replace(/insert(\s)/gi, '') // Remove insert statements
+        .replace(/update(\s)/gi, '') // Remove update statements
+        .replace(/delete(\s)/gi, '') // Remove delete statements
+        .replace(/drop(\s)/gi, '') // Remove drop statements
+        .trim();
+    
+    return sanitized;
+};
+
+/**
+ * Deep sanitization for objects
+ */
+export const deepSanitize = (obj: any): any => {
+    if (typeof obj === 'string') {
+        return sanitizeInput(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+        return obj.map(item => deepSanitize(item));
+    }
+    
+    if (obj !== null && typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                // Sanitize the key as well
+                const sanitizedKey = sanitizeInput(key);
+                sanitized[sanitizedKey] = deepSanitize(obj[key]);
+            }
+        }
+        return sanitized;
+    }
+    
+    return obj;
+};
+
+/**
+ * Request sanitization middleware
+ */
+export const sanitizeRequest = (req: Request, res: Response, next: NextFunction): void => {
+    // Sanitize body
+    if (req.body && typeof req.body === 'object') {
+        req.body = deepSanitize(req.body);
+    }
+    
+    // Sanitize query parameters
+    if (req.query && typeof req.query === 'object') {
+        req.query = deepSanitize(req.query) as any;
+    }
+    
+    // Sanitize params
+    if (req.params && typeof req.params === 'object') {
+        req.params = deepSanitize(req.params) as any;
+    }
+    
+    // Check for malicious patterns
+    const requestData = JSON.stringify({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        url: req.url
+    });
+
+    const isMalicious = MALICIOUS_PATTERNS.some(pattern => pattern.test(requestData));
+    
+    if (isMalicious) {
+        console.error('🚨 SECURITY ALERT - Malicious request blocked:', {
+            ip: req.ip,
+            method: req.method,
+            url: req.url,
+            timestamp: new Date().toISOString()
+        });
+        
+        res.status(403).json({
+            success: false,
+            error: 'Security violation detected',
+            code: 'SECURITY_VIOLATION'
+        });
+        return;
+    }
+    
+    next();
+};
+
 /**
  * Apply enhanced security middleware to routes
  */
-export const applySecurityEnhanced = (req: any, res: any, next: any) => {
-    // Enhanced security headers
+export const applySecurityEnhanced = (req: Request, res: Response, next: NextFunction) => {
+    // Enhanced security headers with Helmet
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     
-    // Content Security Policy
+    // Enhanced Content Security Policy
     res.setHeader('Content-Security-Policy', 
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; media-src 'self'; frame-src 'none';"
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // Will tighten after testing
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "img-src 'self' data: https: blob:; " +
+        "connect-src 'self' wss: ws: https://api.stripe.com; " +
+        "font-src 'self' https://fonts.gstatic.com data:; " +
+        "object-src 'none'; " +
+        "media-src 'self'; " +
+        "frame-src 'self' https://js.stripe.com; " +
+        "child-src 'self'; " +
+        "form-action 'self'; " +
+        "frame-ancestors 'none'; " +
+        "base-uri 'self'; " +
+        "upgrade-insecure-requests;"
     );
     
     next();
@@ -196,18 +334,115 @@ export const createSecureRateLimit = (
     });
 };
 
-// Pre-configured rate limiters
+// Pre-configured rate limiters with production limits (20-30 requests)
 export const authAttemptLimit = createSecureRateLimit(
     15 * 60 * 1000, // 15 minutes
-    5, // 5 attempts
+    3, // 3 attempts (reduced from 5)
     true // Skip successful requests
 );
 
 export const dailyAttemptLimit = createSecureRateLimit(
     24 * 60 * 60 * 1000, // 24 hours
-    50, // 50 attempts per day
+    30, // 30 attempts per day (reduced from 50)
     false // Count all requests
 );
+
+// Production API rate limit (20 requests per 5 minutes)
+export const productionApiLimit = createSecureRateLimit(
+    5 * 60 * 1000, // 5 minutes
+    20, // 20 requests
+    false // Count all requests
+);
+
+// Enhanced speed limiter with progressive delays
+export const enhancedSpeedLimiter = slowDown({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    delayAfter: 5, // Allow 5 requests per minute without delay
+    delayMs: (hits) => hits * 200, // Progressive delay: 200ms, 400ms, 600ms, etc.
+    maxDelayMs: 10000, // Maximum delay of 10 seconds
+    skipFailedRequests: false,
+    skipSuccessfulRequests: false,
+});
+
+// Enhanced validation schemas with stricter rules
+export const enhancedAuthValidation = {
+    register: [
+        body('username')
+            .isLength({ min: 3, max: 20 })
+            .matches(/^[a-zA-Z0-9_-]+$/)
+            .withMessage('Username must be 3-20 characters, alphanumeric with underscores/hyphens only')
+            .custom((value) => !validator.contains(value.toLowerCase(), 'admin'))
+            .withMessage('Username cannot contain "admin"'),
+        body('email')
+            .isEmail()
+            .normalizeEmail()
+            .isLength({ max: 100 })
+            .withMessage('Please provide a valid email address'),
+        body('password')
+            .isLength({ min: 8, max: 128 })
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+            .withMessage('Password must be 8+ characters with uppercase, lowercase, number, and special character')
+            .custom((value) => {
+                // Check for common passwords
+                const commonPasswords = ['password', '12345678', 'qwerty', 'admin', 'letmein', 'welcome'];
+                return !commonPasswords.some(pwd => value.toLowerCase().includes(pwd));
+            })
+            .withMessage('Password is too common'),
+        body('displayName')
+            .optional()
+            .isLength({ min: 1, max: 50 })
+            .matches(/^[a-zA-Z0-9\s_-]+$/)
+            .withMessage('Display name must be 1-50 characters, alphanumeric with spaces')
+    ],
+    login: [
+        body('login')
+            .isLength({ min: 1, max: 100 })
+            .withMessage('Username or email is required')
+            .customSanitizer(value => sanitizeInput(value)),
+        body('password')
+            .isLength({ min: 1, max: 128 })
+            .withMessage('Password is required')
+    ],
+    changePassword: [
+        body('currentPassword')
+            .isLength({ min: 1, max: 128 })
+            .withMessage('Current password is required'),
+        body('newPassword')
+            .isLength({ min: 8, max: 128 })
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+            .withMessage('New password must meet security requirements')
+            .custom((value, { req }) => value !== req.body.currentPassword)
+            .withMessage('New password must be different from current password')
+    ]
+};
+
+// Enhanced validation error handler
+export const enhancedValidationHandler = (req: Request, res: Response, next: NextFunction): void | Response => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const errorMessages = errors.array().map(error => ({
+            field: 'path' in error ? error.path : 'unknown',
+            message: error.msg,
+            value: process.env.NODE_ENV === 'development' && 'value' in error ? error.value : undefined
+        }));
+
+        console.warn('Validation errors:', {
+            ip: req.ip,
+            path: req.path,
+            errors: errorMessages,
+            timestamp: new Date().toISOString()
+        });
+
+        return res.status(400).json({
+            success: false,
+            error: 'Validation failed',
+            code: 'VALIDATION_ERROR',
+            details: errorMessages,
+            timestamp: new Date().toISOString()
+        });
+    }
+    next();
+};
 
 export default {
     applySecurityEnhanced,
@@ -219,5 +454,12 @@ export default {
     validatePinSecurity,
     createSecureRateLimit,
     authAttemptLimit,
-    dailyAttemptLimit
+    dailyAttemptLimit,
+    productionApiLimit,
+    enhancedSpeedLimiter,
+    sanitizeInput,
+    deepSanitize,
+    sanitizeRequest,
+    enhancedAuthValidation,
+    enhancedValidationHandler
 };

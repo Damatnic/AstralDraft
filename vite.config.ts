@@ -40,12 +40,10 @@ export default defineConfig(({ mode }) => {
         }
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY),
-        'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
+        // Remove API key exposure - should be handled via environment variables at runtime
+        // Define global for compatibility
         'global': 'globalThis',
-        'globalThis': 'globalThis',
-        // Environment-specific optimizations
+        // Environment-specific flags
         'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
         '__DEV__': JSON.stringify(!isProduction),
         '__PROD__': JSON.stringify(isProduction)
@@ -75,54 +73,39 @@ export default defineConfig(({ mode }) => {
         cssMinify: isProduction,
         // Source maps for production debugging
         sourcemap: isProduction ? 'hidden' : true,
-        // Bundle size management
-        chunkSizeWarningLimit: 1000,
+        // Increase chunk size limit since we're keeping React together
+        chunkSizeWarningLimit: 1500,
         rollupOptions: {
           output: {
-            // Critical fix for React Children undefined error
+            // Simplified chunking strategy to prevent React initialization issues
             manualChunks: (id: string) => {
-              // CRITICAL: Keep React core together to prevent initialization issues
+              // Only split vendor chunks - keep React ecosystem completely together
               if (id.includes('node_modules')) {
-                // React ecosystem must stay together - this fixes the Children undefined error
-                if (id.includes('react-dom') || id.includes('react/') || id.includes('react\\') || 
-                    id.includes('/react.') || id.includes('\\react.') || id.includes('react@') ||
-                    id.includes('scheduler') || id.includes('react-is')) {
-                  return 'vendor-react';
+                // CRITICAL: React, ReactDOM, and all React-related packages must be in the same chunk
+                // This prevents the "React.Children is undefined" error in production
+                if (id.includes('react') || id.includes('scheduler')) {
+                  return 'react-vendor';
                 }
                 
-                // Keep React-related libraries together to avoid conflicts
-                if (id.includes('framer-motion') || id.includes('lucide-react') || 
-                    id.includes('react-chartjs') || id.includes('recharts')) {
-                  return 'vendor-react-ui';
-                }
-                
-                // Group other vendors
+                // Large standalone libraries can be split
+                if (id.includes('@google/genai')) return 'vendor-ai';
+                if (id.includes('chart.js') || id.includes('recharts') || id.includes('d3')) return 'vendor-charts';
                 if (id.includes('@dnd-kit')) return 'vendor-dnd';
-                if (id.includes('chart.js') || id.includes('d3')) return 'vendor-charts';
-                if (id.includes('lodash') || id.includes('date-fns')) return 'vendor-utils';
-                if (id.includes('axios')) return 'vendor-http';
-                if (id.includes('@google/genai') || id.includes('genai')) return 'vendor-ai';
-                return 'vendor-misc';
+                if (id.includes('lodash')) return 'vendor-lodash';
+                
+                // Everything else goes into a general vendor chunk
+                return 'vendor';
               }
               
-              // Less aggressive app code chunking to avoid dependency issues
-              if (id.includes('/components/oracle/') || id.includes('/services/oracle')) return 'feature-oracle';
-              if (id.includes('/components/draft/')) return 'feature-draft';
-              if (id.includes('/components/analytics/')) return 'feature-analytics';
-              if (id.includes('/services/') && !id.includes('/services/oracle')) return 'app-services';
-              
-              // Keep core app components together
-              return null;
+              // Don't split application code - let Vite handle it automatically
+              // This prevents issues with circular dependencies and initialization order
+              return undefined;
             },
             // File naming strategy for caching
             entryFileNames: 'assets/[name]-[hash].js',
             chunkFileNames: 'assets/[name]-[hash].js',
             assetFileNames: 'assets/[name]-[hash].[ext]',
-            // Ensure proper globals for React
-            globals: {
-              'react': 'React',
-              'react-dom': 'ReactDOM'
-            }
+            // Remove globals configuration - React should be bundled, not external
           },
           // Never externalize React in production - it must be bundled
           external: isProduction ? [] : ['@types/node'],
@@ -160,10 +143,9 @@ export default defineConfig(({ mode }) => {
           '@dnd-kit/core',
           '@dnd-kit/sortable'
         ],
-        // Exclude problematic dependencies that cause React conflicts
-        exclude: ['@types/node', 'react-is'],
-        // Force React dependencies to be optimized together - critical for preventing Children undefined
-        force: true,
+        // Exclude Node.js types from optimization
+        exclude: ['@types/node'],
+        // Don't force optimization - let Vite handle it intelligently
         // Ensure proper ESBuild handling of React
         esbuildOptions: {
           target: 'es2020',
@@ -197,8 +179,9 @@ export default defineConfig(({ mode }) => {
       esbuild: {
         // Tree shaking optimizations
         treeShaking: true,
-        // Remove console logs in production
-        drop: isProduction ? ['console', 'debugger'] : [],
+        // Keep console.error and console.warn for production debugging
+        drop: isProduction ? ['debugger'] : [],
+        pure: isProduction ? ['console.log', 'console.info', 'console.debug'] : [],
         // Minify identifiers
         minifyIdentifiers: isProduction,
         // Minify syntax

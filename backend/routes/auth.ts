@@ -28,12 +28,19 @@ import {
     handleValidationErrors,
     authRateLimit
 } from '../middleware/security';
+import {
+    setTokenCookies,
+    clearTokenCookies,
+    extractRefreshToken,
+    generateCSRFToken,
+    setCSRFToken
+} from '../middleware/sessionManager';
 
 const router = express.Router();
 
 /**
  * POST /api/auth/login
- * Authenticate user and return session tokens
+ * Authenticate user and set httpOnly cookies for tokens
  */
 router.post('/login',
     authRateLimit,
@@ -47,12 +54,24 @@ router.post('/login',
         
         // Clear any previous failed auth attempts
         clearAuthAttempts(req);
+        
+        // Set tokens as httpOnly cookies
+        setTokenCookies(res, authResult.tokens.accessToken, authResult.tokens.refreshToken);
+        
+        // Generate and set CSRF token
+        const csrfToken = generateCSRFToken(req);
+        res.cookie('csrf_token', csrfToken, {
+            httpOnly: false, // CSRF token needs to be readable by client
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
 
+        // Only send user data and CSRF token (not JWT tokens)
         res.json({
             success: true,
             user: authResult.user,
-            accessToken: authResult.tokens.accessToken,
-            refreshToken: authResult.tokens.refreshToken,
+            csrfToken,
             message: 'Login successful'
         });
     } catch (error) {
@@ -69,7 +88,7 @@ router.post('/login',
 
 /**
  * POST /api/auth/register
- * Register a new user account
+ * Register a new user account with secure cookie session
  */
 router.post('/register',
     authRateLimit,
@@ -80,11 +99,23 @@ router.post('/register',
         const { username, email, password, displayName } = req.body;
 
         const authResult: AuthResult = await registerUser(username, email, password, displayName);
+        
+        // Set tokens as httpOnly cookies
+        setTokenCookies(res, authResult.tokens.accessToken, authResult.tokens.refreshToken);
+        
+        // Generate and set CSRF token
+        const csrfToken = generateCSRFToken(req);
+        res.cookie('csrf_token', csrfToken, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
 
         res.status(201).json({
             success: true,
             user: authResult.user,
-            tokens: authResult.tokens,
+            csrfToken,
             message: 'User registered successfully'
         });
     } catch (error) {
@@ -103,11 +134,12 @@ router.post('/register',
 
 /**
  * POST /api/auth/refresh
- * Refresh access token using refresh token
+ * Refresh access token using refresh token from cookie
  */
 router.post('/refresh', async (req: express.Request, res: express.Response) => {
     try {
-        const { refreshToken } = req.body;
+        // Extract refresh token from cookie
+        const refreshToken = extractRefreshToken(req);
 
         if (!refreshToken) {
             return res.status(400).json({
@@ -117,13 +149,28 @@ router.post('/refresh', async (req: express.Request, res: express.Response) => {
         }
 
         const tokens = await refreshAccessToken(refreshToken);
+        
+        // Set new tokens as httpOnly cookies
+        setTokenCookies(res, tokens.accessToken, tokens.refreshToken);
+        
+        // Regenerate CSRF token
+        const csrfToken = generateCSRFToken(req);
+        res.cookie('csrf_token', csrfToken, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
 
         res.json({
             success: true,
-            data: { tokens },
+            csrfToken,
             message: 'Tokens refreshed successfully'
         });
     } catch (error) {
+        // Clear cookies on refresh failure
+        clearTokenCookies(res);
+        
         res.status(401).json({
             success: false,
             error: 'Invalid or expired refresh token',
@@ -134,14 +181,27 @@ router.post('/refresh', async (req: express.Request, res: express.Response) => {
 
 /**
  * POST /api/auth/logout
- * Logout user by invalidating refresh token
+ * Logout user by invalidating refresh token and clearing cookies
  */
 router.post('/logout', async (req: express.Request, res: express.Response) => {
     try {
-        const { refreshToken } = req.body;
+        // Extract refresh token from cookie
+        const refreshToken = extractRefreshToken(req);
 
         if (refreshToken) {
             await logoutUser(refreshToken);
+        }
+        
+        // Clear all auth cookies
+        clearTokenCookies(res);
+        
+        // Destroy session if exists
+        if (req.session) {
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error('Session destruction error:', err);
+                }
+            });
         }
 
         res.json({
@@ -149,6 +209,9 @@ router.post('/logout', async (req: express.Request, res: express.Response) => {
             message: 'Logged out successfully'
         });
     } catch (error) {
+        // Clear cookies even if logout fails
+        clearTokenCookies(res);
+        
         res.status(500).json({
             success: false,
             error: 'Logout failed',
@@ -171,12 +234,26 @@ router.post('/logout-all', authenticateToken, async (req: express.Request, res: 
         }
 
         await logoutUserFromAllDevices(req.user.id);
+        
+        // Clear all auth cookies
+        clearTokenCookies(res);
+        
+        // Destroy session
+        if (req.session) {
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error('Session destruction error:', err);
+                }
+            });
+        }
 
         res.json({
             success: true,
             message: 'Logged out from all devices successfully'
         });
     } catch (error) {
+        clearTokenCookies(res);
+        
         res.status(500).json({
             success: false,
             error: 'Logout failed',

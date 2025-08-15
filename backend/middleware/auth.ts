@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, getUserById, JWTPayload } from '../services/authService';
+import { extractToken } from './sessionManager';
 
 // Define a user type for clarity
 interface AuthenticatedUser {
@@ -33,12 +34,12 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * Middleware to authenticate JWT tokens
+ * Middleware to authenticate JWT tokens from cookies or headers
  */
 export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader?.split(' ')[1]; // Bearer TOKEN
+        // Extract token from cookie or Authorization header
+        const token = extractToken(req);
 
         if (!token) {
             res.status(401).json({
@@ -104,8 +105,8 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
  */
 export async function optionalAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader?.split(' ')[1];
+        // Extract token from cookie or Authorization header
+        const token = extractToken(req);
 
         if (token) {
             const payload = verifyToken(token);

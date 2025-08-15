@@ -17,7 +17,12 @@
       "Bash(timeout 30s npm run dev)",
       "Bash(cp:*)",
       "Bash(npm run preview:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx serve:*)",
+      "Bash(dir:*)",
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": [],

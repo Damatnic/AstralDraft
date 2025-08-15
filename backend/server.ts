@@ -5,6 +5,7 @@
 
 import express from 'express';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 
 // Import security middleware
 import {
@@ -19,6 +20,23 @@ import {
     requestSizeLimit
 } from './middleware/security';
 
+// Import enhanced security middleware
+import {
+    applySecurityEnhanced,
+    productionApiLimit,
+    enhancedSpeedLimiter,
+    sanitizeRequest,
+    enhancedValidationHandler
+} from './middleware/securityEnhanced';
+
+// Import session management
+import {
+    sessionConfig,
+    csrfProtection,
+    setCSRFToken,
+    sessionSecurity
+} from './middleware/sessionManager';
+
 // Import route handlers
 import authRoutes from './routes/auth';
 import enhancedAuthRoutes from './routes/enhancedAuth';
@@ -26,6 +44,7 @@ import leagueRoutes from './routes/leagues';
 import oracleRoutes from './routes/oracle';
 import analyticsRoutes from './routes/analytics';
 import socialRoutes from './routes/social';
+import apiProxyRoutes from './routes/apiProxy';
 
 // Import database connection
 import { initDatabase } from './db/index';
@@ -40,8 +59,15 @@ const app = express();
 // Trust proxy for accurate IP addresses (important for rate limiting)
 app.set('trust proxy', 1);
 
-// Basic security headers
+// Cookie parser with secret for signed cookies
+app.use(cookieParser(process.env.COOKIE_SECRET || 'change-this-secret-in-production'));
+
+// Session configuration
+app.use(sessionConfig);
+
+// Enhanced security headers with XSS protection
 app.use(securityHeaders);
+app.use(applySecurityEnhanced);
 
 // CORS configuration
 app.use(corsConfig);
@@ -49,15 +75,28 @@ app.use(corsConfig);
 // Request logging and monitoring
 app.use(securityLogger);
 
-// General API rate limiting
-app.use('/api/', generalRateLimit);
+// Session security (fingerprinting and regeneration)
+app.use(sessionSecurity);
 
-// Speed limiting for high-frequency requests
-app.use(speedLimiter);
+// Input sanitization for all requests
+app.use(sanitizeRequest);
+
+// Production API rate limiting (20-30 requests)
+if (process.env.NODE_ENV === 'production') {
+    app.use('/api/', productionApiLimit);
+    app.use(enhancedSpeedLimiter);
+} else {
+    app.use('/api/', generalRateLimit);
+    app.use(speedLimiter);
+}
 
 // Body parsing middleware with size limits
 app.use(express.json({ limit: '1mb' })); // Reduced from 10mb for security
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(compression());
+
+// CSRF token generation for state-changing requests
+app.use('/api/', setCSRFToken);
 
 // Content-Type validation for JSON endpoints
 app.use('/api/', validateContentType('application/json'));
@@ -75,13 +114,16 @@ app.get('/health', (req, res) => {
     });
 });
 
-// API Routes with specific rate limiting
+// API Routes with specific rate limiting and CSRF protection
 app.use('/api/auth', authRateLimit, authRoutes);
 app.use('/api/auth-enhanced', enhancedAuthRoutes); // Enhanced authentication with built-in rate limiting
-app.use('/api/leagues', leagueRoutes);
-app.use('/api/oracle', predictionRateLimit, oracleRoutes);
+
+// Protected routes with CSRF protection
+app.use('/api/leagues', csrfProtection, leagueRoutes);
+app.use('/api/oracle', csrfProtection, predictionRateLimit, oracleRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/social', socialRoutes);
+app.use('/api/social', csrfProtection, socialRoutes);
+app.use('/api/proxy', apiProxyRoutes); // Secure API proxy endpoints
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -125,7 +167,13 @@ export async function startServer() {
             const server = app.listen(PORT, () => {
                 console.log(`🚀 Astral Draft API Server running on port ${PORT}`);
                 console.log(`📝 Environment: ${NODE_ENV}`);
-                console.log(`🔒 Security middleware enabled`);
+                console.log(`🔒 Enhanced security middleware enabled:`);
+                console.log(`   ✅ httpOnly cookies for JWT tokens`);
+                console.log(`   ✅ CSRF protection enabled`);
+                console.log(`   ✅ XSS protection headers`);
+                console.log(`   ✅ Input sanitization active`);
+                console.log(`   ✅ Rate limiting: ${NODE_ENV === 'production' ? '20-30 req/window' : '100 req/window'}`);
+                console.log(`   ✅ Refresh token rotation enabled`);
                 console.log(`📊 Oracle API endpoints available at http://localhost:${PORT}/api/oracle`);
                 console.log(`📈 Analytics API endpoints available at http://localhost:${PORT}/api/analytics`);
                 console.log(`🏈 Health check: http://localhost:${PORT}/health`);
