@@ -20,35 +20,43 @@
   status = 200
   force = true
 
-# Asset redirects - Handle static assets first
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-  force = false
-
-[[redirects]]
-  from = "/sw.js"
-  to = "/sw.js"
-  status = 200
-  force = true
-  [redirects.headers]
-    "Content-Type" = "application/javascript; charset=utf-8"
-
-# SPA fallback - catch all other routes and send to index.html for client-side routing
+# SPA fallback - everything else goes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
+
+# Headers for all JavaScript files
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    "Content-Type" = "application/javascript; charset=utf-8"
+    "Cache-Control" = "public, max-age=31536000, immutable"
 
 # Headers for assets directory - immutable caching for built assets
 [[headers]]
   for = "/assets/*"
   [headers.values]
+    "Content-Type" = "application/javascript; charset=utf-8"
     "Cache-Control" = "public, max-age=31536000, immutable"
     "X-Content-Type-Options" = "nosniff"
 
+# Headers for CSS files
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    "Content-Type" = "text/css; charset=utf-8"
+    "Cache-Control" = "public, max-age=31536000, immutable"
+
+# Headers for service worker
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    "Content-Type" = "application/javascript; charset=utf-8"
+    "Cache-Control" = "public, max-age=0, must-revalidate"
+    "Service-Worker-Allowed" = "/"
+
+# Security headers for all routes
 [[headers]]
   for = "/*"
   [headers.values]
@@ -58,98 +66,6 @@
     "X-XSS-Protection" = "1; mode=block"
     "Referrer-Policy" = "strict-origin-when-cross-origin"
     "Permissions-Policy" = "camera=(), microphone=(), geolocation=()"
-
-[[headers]]
-  for = "/manifest.json"
-  [headers.values]
-    "Content-Type" = "application/manifest+json"
-
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    "Content-Type" = "application/javascript; charset=utf-8"
-    "Cache-Control" = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/assets/*.js"
-  [headers.values]
-    "Content-Type" = "application/javascript; charset=utf-8"
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/sw.js"
-  [headers.values]
-    "Content-Type" = "application/javascript; charset=utf-8"
-    "Cache-Control" = "public, max-age=0, must-revalidate"
-    "Service-Worker-Allowed" = "/"
-
-[[headers]]
-  for = "/enhanced-sw.js"
-  [headers.values]
-    "Content-Type" = "application/javascript; charset=utf-8"
-    "Cache-Control" = "public, max-age=0, must-revalidate"
-    "Service-Worker-Allowed" = "/"
-
-[[headers]]
-  for = "/sw-mobile.js"
-  [headers.values]
-    "Content-Type" = "application/javascript; charset=utf-8"
-    "Cache-Control" = "public, max-age=0, must-revalidate"
-    "Service-Worker-Allowed" = "/"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    "Content-Type" = "text/css; charset=utf-8"
-    "Cache-Control" = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/index.css"
-  [headers.values]
-    "Content-Type" = "text/css; charset=utf-8"
-    "Cache-Control" = "public, max-age=3600"
-
-[[headers]]
-  for = "/*.svg"
-  [headers.values]
-    "Content-Type" = "image/svg+xml; charset=utf-8"
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/favicon.svg"
-  [headers.values]
-    "Content-Type" = "image/svg+xml; charset=utf-8"
-    "Cache-Control" = "public, max-age=86400"
-
-[[headers]]
-  for = "/*.png"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.jpg"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.jpeg"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.gif"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.ico"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*.woff2"
-  [headers.values]
-    "Cache-Control" = "public, max-age=31536000, immutable"
 
 # Forms handling
 [forms]

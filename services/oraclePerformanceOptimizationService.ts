@@ -295,27 +295,27 @@ class OraclePerformanceOptimizationService {
     private readonly metrics: PerformanceMetrics;
     
     // Caches
-    private predictionCache: PerformanceCache<any>;
-    private analyticsCache: PerformanceCache<any>;
-    private userStatsCache: PerformanceCache<any>;
+    private predictionCache!: PerformanceCache<any>;
+    private analyticsCache!: PerformanceCache<any>;
+    private userStatsCache!: PerformanceCache<any>;
     
     // Processors
-    private realTimeUpdateProcessor: BatchProcessor<any>;
-    private analyticsUpdateProcessor: BatchProcessor<any>;
+    private realTimeUpdateProcessor!: BatchProcessor<any>;
+    private analyticsUpdateProcessor!: BatchProcessor<any>;
     
     // Managers
-    private virtualScrollManager: VirtualScrollManager;
-    private requestQueueManager: RequestQueueManager;
+    private virtualScrollManager!: VirtualScrollManager;
+    private requestQueueManager!: RequestQueueManager;
     
     // Debounced functions
-    public debouncedUserInput: (fn: Function) => Function;
-    public debouncedSearch: (fn: Function) => Function;
-    public debouncedPredictionSubmission: (fn: Function) => Function;
+    public debouncedUserInput!: <T extends (...args: any[]) => any>(fn: T) => T;
+    public debouncedSearch!: <T extends (...args: any[]) => any>(fn: T) => T;
+    public debouncedPredictionSubmission!: <T extends (...args: any[]) => any>(fn: T) => T;
     
     // Throttled functions
-    public throttledRealTimeUpdate: (fn: Function) => Function;
-    public throttledAnalyticsRefresh: (fn: Function) => Function;
-    public throttledScrollEvent: (fn: Function) => Function;
+    public throttledRealTimeUpdate!: <T extends (...args: any[]) => any>(fn: T) => T;
+    public throttledAnalyticsRefresh!: <T extends (...args: any[]) => any>(fn: T) => T;
+    public throttledScrollEvent!: <T extends (...args: any[]) => any>(fn: T) => T;
 
     constructor(config: Partial<PerformanceConfig> = {}) {
         this.config = { ...DEFAULT_PERFORMANCE_CONFIG, ...config };
@@ -387,25 +387,25 @@ class OraclePerformanceOptimizationService {
     }
 
     private initializeDebouncedFunctions(): void {
-        this.debouncedUserInput = (fn: Function) => 
-            debounce(fn, this.config.userInputDebounceMs);
+        this.debouncedUserInput = <T extends (...args: any[]) => any>(fn: T) => 
+            debounce(fn, this.config.userInputDebounceMs) as unknown as T;
         
-        this.debouncedSearch = (fn: Function) => 
-            debounce(fn, this.config.searchDebounceMs);
+        this.debouncedSearch = <T extends (...args: any[]) => any>(fn: T) => 
+            debounce(fn, this.config.searchDebounceMs) as unknown as T;
             
-        this.debouncedPredictionSubmission = (fn: Function) => 
-            debounce(fn, this.config.predictionSubmissionDebounceMs);
+        this.debouncedPredictionSubmission = <T extends (...args: any[]) => any>(fn: T) => 
+            debounce(fn, this.config.predictionSubmissionDebounceMs) as unknown as T;
     }
 
     private initializeThrottledFunctions(): void {
-        this.throttledRealTimeUpdate = (fn: Function) => 
-            throttle(fn, this.config.realTimeUpdateThrottleMs);
+        this.throttledRealTimeUpdate = <T extends (...args: any[]) => any>(fn: T) => 
+            throttle(fn, this.config.realTimeUpdateThrottleMs) as unknown as T;
             
-        this.throttledAnalyticsRefresh = (fn: Function) => 
-            throttle(fn, this.config.analyticsRefreshThrottleMs);
+        this.throttledAnalyticsRefresh = <T extends (...args: any[]) => any>(fn: T) => 
+            throttle(fn, this.config.analyticsRefreshThrottleMs) as unknown as T;
             
-        this.throttledScrollEvent = (fn: Function) => 
-            throttle(fn, this.config.scrollEventThrottleMs);
+        this.throttledScrollEvent = <T extends (...args: any[]) => any>(fn: T) => 
+            throttle(fn, this.config.scrollEventThrottleMs) as unknown as T;
     }
 
     // Cache management methods

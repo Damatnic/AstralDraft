@@ -414,7 +414,7 @@ export function useSnakeDraft(options: UseSnakeDraftOptions): SnakeDraftState {
     recommendations,
     
     // Keeper league
-    keeperConfig,
+    keeperConfig: keeperConfig || null,
     eligibleKeepers,
     
     // Players and filtering

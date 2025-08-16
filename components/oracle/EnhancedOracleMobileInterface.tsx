@@ -10,7 +10,7 @@ import { useAuth } from '../../contexts/SimpleAuthContext';
 import { Widget } from '../ui/Widget';
 import { ZapIcon } from '../icons/ZapIcon';
 import { oracleApiClient } from '../../services/oracleApiClient';
-import { PredictionResponse } from '../../backend/routes/enhancedOracle';
+import { PredictionResponse } from '../../services/oracleApiClient';
 import { useOracleWebSocket, OracleWebSocketMessage } from '../../hooks/useOracleWebSocket';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useOracleNotifications } from '../../hooks/useOracleNotifications';

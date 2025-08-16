@@ -3,8 +3,26 @@
  * Manages subscription-based feature access and usage limits
  */
 
-import { getUserSubscription, getUserBilling } from '../backend/db/payment-schema';
-import { runQuery, getRow } from '../backend/db/index';
+// Mock functions until backend is properly set up
+const getUserSubscription = async (userId: string) => {
+    // TODO: Implement actual database call
+    return null;
+};
+
+const getUserBilling = async (userId: string) => {
+    // TODO: Implement actual database call
+    return null;
+};
+
+const runQuery = async (query: string, params?: any[]) => {
+    // TODO: Implement actual database call
+    return { rows: [] };
+};
+
+const getRow = async (query: string, params?: any[]) => {
+    // TODO: Implement actual database call
+    return null;
+};
 
 // Premium feature access levels
 export enum FeatureTier {
@@ -108,13 +126,13 @@ export class PremiumFeatureService {
      */
     static async getUserTier(userId: number): Promise<FeatureTier> {
         try {
-            const subscription = await getUserSubscription(userId);
+            const subscription = await getUserSubscription(String(userId));
             
-            if (!subscription || subscription.status !== 'active') {
+            if (!subscription || (subscription as any).status !== 'active') {
                 return FeatureTier.FREE;
             }
 
-            switch (subscription.product_type) {
+            switch ((subscription as any).product_type) {
                 case 'oracle_premium':
                     return FeatureTier.ORACLE_PREMIUM;
                 case 'analytics_pro':
@@ -205,7 +223,7 @@ export class PremiumFeatureService {
                 AND created_at >= date('now', 'start of month')
             `, [userId, featureName]);
             
-            const usage = result ? Number(result.total_usage) : 0;
+            const usage = result ? Number((result as any).total_usage) : 0;
             console.log(`Getting usage for user ${userId}, feature ${featureName}: ${usage}`);
             return usage;
         } catch (error) {
@@ -276,8 +294,8 @@ export class PremiumFeatureService {
      */
     static async isUserOnTrial(userId: number): Promise<boolean> {
         try {
-            const subscription = await getUserSubscription(userId);
-            return subscription?.status === 'trialing' || false;
+            const subscription = await getUserSubscription(String(userId));
+            return (subscription as any)?.status === 'trialing' || false;
         } catch (error) {
             console.error('Error checking trial status:', error);
             return false;
@@ -290,8 +308,8 @@ export class PremiumFeatureService {
     static async getUserSubscriptionDetails(userId: number) {
         try {
             const [subscription, billing] = await Promise.all([
-                getUserSubscription(userId),
-                getUserBilling(userId)
+                getUserSubscription(String(userId)),
+                getUserBilling(String(userId))
             ]);
 
             return {

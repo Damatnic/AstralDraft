@@ -351,7 +351,7 @@ class OracleEnsembleMachineLearningService {
     private readonly FEATURE_ENGINEERING_KEY = 'oracleFeatureEngineering';
 
     private readonly models: Map<string, EnsembleModel> = new Map();
-    private trainingConfig: ModelTrainingConfig;
+    private trainingConfig!: ModelTrainingConfig;
     
     // Data validation properties
     private validationRules: DataValidationRule[] = [];
@@ -1293,10 +1293,10 @@ class OracleEnsembleMachineLearningService {
         let steps = 5; // Base steps for preparation
         
         if (config.modelType === 'ensemble') {
-            steps += 5 * config.maxEpochs; // 5 models × epochs
+            steps += 5 * (config.maxEpochs || 100); // 5 models × epochs
             steps += 10; // Ensemble stacking
         } else {
-            steps += config.maxEpochs;
+            steps += (config.maxEpochs || 100);
         }
         
         if (config.crossValidationEnabled) {
@@ -1333,7 +1333,7 @@ class OracleEnsembleMachineLearningService {
             const engineeredFeatures = await this.engineerFeatures(trainingData);
             
             await this.updateProgress(session, 'preparation', 'Data Splitting', 2, progressCallback);
-            const splitData = this.trainTestSplit(engineeredFeatures, config.trainingSplit);
+            const splitData = this.trainTestSplit(engineeredFeatures, config.trainingSplit || 0.8);
 
             // Step 2: Model Training
             session.progress.phase = 'training';
@@ -1357,9 +1357,9 @@ class OracleEnsembleMachineLearningService {
                 session.models = ['random_forest', 'gradient_boosting', 'neural_network', 'linear_regression', 'svm', 'stacked_ensemble'];
             } else {
                 // Train single model based on type
-                const modelTrainer = this.getModelTrainer(config.modelType);
-                await this.trainModelWithProgress(session, config.modelType, currentStep++, modelTrainer, splitData, progressCallback);
-                session.models = [config.modelType];
+                const modelTrainer = this.getModelTrainer(config.modelType!);
+                await this.trainModelWithProgress(session, config.modelType!, currentStep++, modelTrainer, splitData, progressCallback);
+                session.models = [config.modelType!];
             }
 
             // Step 3: Model validation and weight updates
@@ -1380,7 +1380,7 @@ class OracleEnsembleMachineLearningService {
                 finalAccuracy: metrics.overallAccuracy,
                 validationAccuracy: metrics.overallAccuracy * 0.95, // Simulated validation accuracy
                 trainingDuration: Date.now() - startTime,
-                epochs: config.maxEpochs
+                epochs: config.maxEpochs || 100
             };
 
             this.activeSessions.delete(sessionId);
@@ -1388,7 +1388,7 @@ class OracleEnsembleMachineLearningService {
 
         } catch (error) {
             session.status = 'failed';
-            session.error = error.message;
+            session.error = error instanceof Error ? error.message : String(error);
             session.endTime = new Date().toISOString();
             this.activeSessions.delete(sessionId);
             this.sessionHistory.push(session);
@@ -1408,14 +1408,15 @@ class OracleEnsembleMachineLearningService {
         
         // Simulate training epochs for neural network
         if (modelName.includes('Neural Network')) {
-            for (let epoch = 1; epoch <= session.configuration.maxEpochs; epoch++) {
+            for (let epoch = 1; epoch <= (session.configuration.maxEpochs || 100); epoch++) {
                 // Simulate epoch training
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
                 // Update progress with epoch-specific metrics
                 session.progress.epoch = epoch;
-                session.progress.accuracy = Math.min(0.95, 0.3 + (epoch / session.configuration.maxEpochs) * 0.6 + Math.random() * 0.05);
-                session.progress.loss = Math.max(0.1, 0.8 - (epoch / session.configuration.maxEpochs) * 0.6 + Math.random() * 0.1);
+                const maxEpochs = session.configuration.maxEpochs || 100;
+                session.progress.accuracy = Math.min(0.95, 0.3 + (epoch / maxEpochs) * 0.6 + Math.random() * 0.05);
+                session.progress.loss = Math.max(0.1, 0.8 - (epoch / maxEpochs) * 0.6 + Math.random() * 0.1);
                 
                 if (progressCallback) {
                     progressCallback(session.progress);
@@ -1804,9 +1805,10 @@ class OracleEnsembleMachineLearningService {
         const temporal: Record<string, number> = {};
         
         // Season progression
-        temporal.season_progress = (data.week || 1) / 17; // Normalized season progress
-        temporal.season_late_push = data.week >= 14 ? 1 : 0; // Playoff push indicator
-        temporal.season_early = data.week <= 4 ? 1 : 0; // Early season indicator
+        const week = data.week || 1;
+        temporal.season_progress = week / 17; // Normalized season progress
+        temporal.season_late_push = week >= 14 ? 1 : 0; // Playoff push indicator
+        temporal.season_early = week <= 4 ? 1 : 0; // Early season indicator
         
         // Time-based momentum
         const recentPerf = data.features.playerRecentPerformance || [];
@@ -2168,7 +2170,7 @@ class OracleEnsembleMachineLearningService {
     private async buildNeuralNetwork(trainData: any[], config: any): Promise<any> { 
         // Build neural network architecture
         return {
-            layers: config.hiddenLayers.map((size, i) => ({
+            layers: config.hiddenLayers.map((size: number, i: number) => ({
                 id: `layer_${i}`,
                 size,
                 activation: config.activation,

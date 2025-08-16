@@ -175,7 +175,8 @@ describe('Mobile Performance Optimizations', () => {
       const startTime = performance.now();
 
       // Simulate mobile breakpoint
-      require('../utils/mobileOptimizationUtils').useResponsiveBreakpoint.mockReturnValue({
+      const mobileUtils = jest.requireMock('../utils/mobileOptimizationUtils') as any;
+      mobileUtils.useResponsiveBreakpoint.mockReturnValue({
         isMobile: true,
         isTablet: false
       });
@@ -196,7 +197,7 @@ describe('Mobile Performance Optimizations', () => {
     });
 
     it('should handle responsive breakpoint changes efficiently', () => {
-      const mockUseResponsiveBreakpoint = require('../utils/mobileOptimizationUtils').useResponsiveBreakpoint;
+      const mockUseResponsiveBreakpoint = (jest.requireMock('../utils/mobileOptimizationUtils') as any).useResponsiveBreakpoint;
       
       // Test multiple breakpoint changes
       const breakpoints = [
@@ -209,7 +210,7 @@ describe('Mobile Performance Optimizations', () => {
         mockUseResponsiveBreakpoint.mockReturnValue(breakpoint);
         
         const TestComponent = () => {
-          const { isMobile } = require('../utils/mobileOptimizationUtils').useResponsiveBreakpoint();
+          const { isMobile } = (jest.requireMock('../utils/mobileOptimizationUtils') as any).useResponsiveBreakpoint();
           return React.createElement('div', {}, isMobile ? 'Mobile' : 'Desktop');
         };
 
@@ -244,7 +245,7 @@ describe('Mobile Performance Optimizations', () => {
       const mockRemoveEventListener = jest.spyOn(window, 'removeEventListener').mockImplementation(() => {});
 
       const TestComponent = () => {
-        require('../utils/mobileOptimizationUtils').useResponsiveBreakpoint();
+        (jest.requireMock('../utils/mobileOptimizationUtils') as any).useResponsiveBreakpoint();
         return React.createElement('div', {}, 'Test');
       };
 

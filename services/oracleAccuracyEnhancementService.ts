@@ -152,7 +152,7 @@ class OracleAccuracyEnhancementService {
 
         } catch (error) {
             console.error('Enhanced prediction generation failed:', error);
-            throw new Error(`Failed to generate enhanced prediction: ${error.message}`);
+            throw new Error(`Failed to generate enhanced prediction: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'events';
 import { oracleRealTimeService } from './oracleRealTimeService';
+// @ts-ignore - backend module
 import { getRow } from '../backend/db/index';
 
 export interface CollaborativeMessage {

@@ -17,7 +17,7 @@ import PredictionCard, { LivePrediction } from './PredictionCard';
 import PredictionDetail from './PredictionDetail';
 import OracleErrorBoundary from './OracleErrorBoundary';
 import { OracleAnalyticsDashboard } from '../analytics/OracleAnalyticsDashboard';
-import { PredictionResponse } from '../../backend/routes/enhancedOracle';
+import { PredictionResponse } from '../../services/oracleApiClient';
 import { BarChart3, Target, Menu, Settings } from 'lucide-react';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { NotificationCenter } from './NotificationCenter';
@@ -252,7 +252,7 @@ const OracleRealTimePredictionInterface: React.FC<Props> = ({
                     dataPoints: p.dataPoints,
                     timestamp: new Date().toISOString(),
                     participants: p.participantsCount || 0,
-                    timeRemaining: new Date(p.expiresAt).getTime() - Date.now(),
+                    timeRemaining: p.expiresAt ? new Date(p.expiresAt).getTime() - Date.now() : 0,
                     consensusChoice: p.consensusChoice,
                     consensusConfidence: p.consensusConfidence,
                     userChoice: p.userSubmission?.choice,

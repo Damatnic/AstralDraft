@@ -121,7 +121,7 @@ const ModernAuthView: React.FC = () => {
                   id: authState.user.id.toString(),
                   name: authState.user.username,
                   email: authState.user.email,
-                  avatar: authState.user.avatar || '/default-avatar.png'
+                  avatar: authState.user.avatarUrl || '/default-avatar.png'
                 }
               });
             }
@@ -148,7 +148,7 @@ const ModernAuthView: React.FC = () => {
                   id: authState.user.id.toString(),
                   name: authState.user.username,
                   email: authState.user.email,
-                  avatar: authState.user.avatar || '/default-avatar.png'
+                  avatar: authState.user.avatarUrl || '/default-avatar.png'
                 }
               });
             }

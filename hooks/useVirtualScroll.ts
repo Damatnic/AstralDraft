@@ -20,7 +20,7 @@ interface VirtualScrollResult {
     offsetY: number;
     containerProps: {
         style: React.CSSProperties;
-        ref: React.RefObject<HTMLDivElement>;
+        ref: React.RefObject<HTMLDivElement | null>;
     };
     viewportProps: {
         style: React.CSSProperties;

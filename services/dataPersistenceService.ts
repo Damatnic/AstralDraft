@@ -493,7 +493,7 @@ class DataPersistenceService {
    * Get sync priority for table
    */
   private getSyncPriority(table: string): number {
-    const priorities = {
+    const priorities: Record<string, number> = {
       'userPreferences': 1,
       'oraclePredictions': 2,
       'draftSessions': 3,

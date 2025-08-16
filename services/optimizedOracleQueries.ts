@@ -3,6 +3,7 @@
  * Performance-tuned queries with caching integration
  */
 
+// @ts-ignore - backend module
 import { getRows, getRow, runQuery } from '../backend/db/index';
 import { oraclePerformanceService } from './oraclePerformanceService';
 

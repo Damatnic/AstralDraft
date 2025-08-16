@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     // Removed duplicate chunk logic to prevent conflicts - using inline logic in build.rollupOptions.output.manualChunks
     
     return {
-      base: isProduction ? './' : '/',
+      base: '/',
       plugins: [
         react(),
         // Copy service worker to dist folder - only during build

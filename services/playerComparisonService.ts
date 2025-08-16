@@ -332,7 +332,7 @@ class PlayerComparisonService {
     const recentFormModifier = this.getRecentFormModifier(player);
 
     const projectedFantasyPoints = Math.max(0, 
-      baseProjection.fantasyPoints * 
+      (baseProjection.fantasyPoints || 0) * 
       matchupModifier * 
       weatherModifier * 
       recentFormModifier
@@ -742,7 +742,7 @@ class PlayerComparisonService {
   private async notifyHighConfidenceComparison(comparison: PlayerComparison): Promise<void> {
     const winner = comparison.players.find(p => p.id === comparison.analysis.winner);
     if (winner) {
-      realtimeNotificationService.emit('player_comparison_alert', {
+      (realtimeNotificationService as any).emit('player_comparison_alert', {
         playerId: winner.id,
         playerName: winner.name,
         projectedPoints: winner.projectedStats.fantasyPoints,

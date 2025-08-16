@@ -5,10 +5,6 @@
 
 import request from 'supertest';
 import express from 'express';
-
-// Mock enhanced auth service
-const mockEnhancedAuthService = {
-    secureLogin: jest.fn(),
 import { 
     applySecurityEnhanced, 
     validateSecureSession, 
@@ -18,8 +14,11 @@ import {
     validatePinSecurity, 
     recordSecurityAttempt 
 } from '../backend/middleware/security';
-
 import { EnhancedAuthService } from '../backend/services/enhancedAuthService';
+
+// Mock enhanced auth service
+const mockEnhancedAuthService = {
+    secureLogin: jest.fn(),
     secureLogout: jest.fn(),
     refreshSession: jest.fn(),
     changePin: jest.fn(),
@@ -279,7 +278,7 @@ describe('Enhanced Authentication Security', () => {
     });
 
     describe('EnhancedAuthService', () => {
-        const mockDatabaseService = require('../../backend/services/databaseService').databaseService;
+        const mockDatabaseService = (jest.requireMock('../../backend/services/databaseService') as any).databaseService;
 
         describe('secureLogin', () => {
             beforeEach(() => {
@@ -288,7 +287,7 @@ describe('Enhanced Authentication Security', () => {
 
             it('should reject login for locked accounts', async () => {
                 // Mock account lockout check
-                jest.spyOn(require('../../backend/middleware/securityEnhanced'), 'isAccountLocked')
+                jest.spyOn(jest.requireMock('../../backend/middleware/securityEnhanced') as any, 'isAccountLocked')
                     .mockReturnValue(true);
 
                 const loginAttempt = {
@@ -307,7 +306,7 @@ describe('Enhanced Authentication Security', () => {
 
             it('should validate PIN security requirements', async () => {
                 // Mock unlocked account
-                jest.spyOn(require('../../backend/middleware/securityEnhanced'), 'isAccountLocked')
+                jest.spyOn(jest.requireMock('../../backend/middleware/securityEnhanced') as any, 'isAccountLocked')
                     .mockReturnValue(false);
 
                 const loginAttempt = {
@@ -326,7 +325,7 @@ describe('Enhanced Authentication Security', () => {
 
             it('should authenticate valid credentials successfully', async () => {
                 // Mock successful authentication
-                jest.spyOn(require('../../backend/middleware/securityEnhanced'), 'isAccountLocked')
+                jest.spyOn(jest.requireMock('../../backend/middleware/securityEnhanced') as any, 'isAccountLocked')
                     .mockReturnValue(false);
                 mockDatabaseService.authenticateUser.mockResolvedValue({
                     id: 1,
@@ -430,7 +429,7 @@ describe('Enhanced Authentication Security', () => {
         it('should apply rate limiting to authentication endpoints', async () => {
             // This would require integration testing with actual rate limiting
             // For unit tests, we verify the middleware is properly configured
-            const rateLimit = require('../../backend/middleware/securityEnhanced').createSecureRateLimit;
+            const rateLimit = (jest.requireMock('../../backend/middleware/securityEnhanced') as any).createSecureRateLimit;
             
             expect(typeof rateLimit).toBe('function');
             

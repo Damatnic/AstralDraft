@@ -117,14 +117,9 @@ export const useOracleCollaborative = (userId: string, predictionId: string, use
                 predictionId,
                 userId,
                 username: userInfo?.username || `User${userId}`,
-                title: params.title,
                 content: params.content,
-                type: params.type,
-                confidence: params.confidence,
-                tags: params.tags || [],
                 votes: [],
-                timestamp: new Date().toISOString(),
-                isVerified: false
+                timestamp: new Date().toISOString()
             };
             
             setInsights(prev => [...prev, insight]);
@@ -261,9 +256,19 @@ export const useOracleCollaborative = (userId: string, predictionId: string, use
                     const existingIndex = reactions.findIndex(r => r.userId === userId);
                     
                     if (existingIndex >= 0) {
-                        reactions[existingIndex] = { userId, reaction };
+                        reactions[existingIndex] = { 
+                            emoji: reaction,
+                            userId,
+                            username: userInfo?.username || `User${userId}`,
+                            timestamp: new Date().toISOString()
+                        };
                     } else {
-                        reactions.push({ userId, reaction });
+                        reactions.push({ 
+                            emoji: reaction,
+                            userId,
+                            username: userInfo?.username || `User${userId}`,
+                            timestamp: new Date().toISOString()
+                        });
                     }
                     
                     return { ...m, reactions };

@@ -38,7 +38,8 @@ async function setupIntegrationDatabase(): Promise<void> {
   try {
     // Create a fresh in-memory database for each test run
     const dbSetupPath = path.resolve(process.cwd(), 'backend/db/testSetup.ts');
-    if (require('fs').existsSync(dbSetupPath)) {
+    const fs = await import('fs');
+    if (fs.existsSync(dbSetupPath)) {
       const { setupTestDatabase } = await import(dbSetupPath);
       await setupTestDatabase();
     }
@@ -55,7 +56,8 @@ async function seedTestData(): Promise<void> {
   try {
     // Seed test users, leagues, predictions, etc.
     const seedPath = path.resolve(process.cwd(), '__tests__/fixtures/seedData.ts');
-    if (require('fs').existsSync(seedPath)) {
+    const fs = await import('fs');
+    if (fs.existsSync(seedPath)) {
       const { seedIntegrationData } = await import(seedPath);
       await seedIntegrationData();
     }

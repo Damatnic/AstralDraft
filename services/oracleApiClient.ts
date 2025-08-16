@@ -3,7 +3,62 @@
  * Handles communication with the enhanced Oracle backend API
  */
 
-import { CreateOraclePredictionRequest, SubmitPredictionRequest, PredictionResponse } from '../backend/routes/enhancedOracle';
+// Re-export types needed by components
+export interface PredictionResponse {
+    id: string;
+    week: number;
+    season: number;
+    type: string;
+    question: string;
+    options: string[];
+    oracleChoice: number;
+    oracleConfidence: number;
+    oracleReasoning: string;
+    dataPoints: any[];
+    expiresAt?: string;
+    status?: string;
+    participantsCount?: number;
+    consensusChoice?: number;
+    consensusConfidence?: number;
+    userSubmission?: {
+        choice: number;
+        confidence: number;
+        submittedAt: string;
+    };
+    playerPrediction?: {
+        choice: number;
+        confidence: number;
+        submittedAt: string;
+    };
+}
+
+export interface CreateOraclePredictionRequest {
+    id: string;
+    week: number;
+    season?: number;
+    type: string;
+    category?: string;
+    question: string;
+    description?: string;
+    options: string[];
+    oracleChoice: number;
+    oracleConfidence: number;
+    oracleReasoning: string;
+    dataPoints: any[];
+    difficultyLevel?: number;
+    pointsMultiplier?: number;
+    expiresAt: string;
+    tags?: string[];
+    metadata?: any;
+}
+
+export interface SubmitPredictionRequest {
+    predictionId: string;
+    playerNumber: number;
+    choice: number;
+    confidence: number;
+    reasoning?: string;
+}
 
 export interface OracleApiResponse<T = any> {
     success: boolean;

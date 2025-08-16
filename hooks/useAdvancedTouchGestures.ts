@@ -307,7 +307,7 @@ export const useAdvancedTouchGestures = (
             swipeDownRef.current?.(gesture);
             break;
         }
-      } else if (distance < doubleTap.threshold) {
+      } else if (distance < (doubleTap.threshold || 50)) {
         // Potential single tap
         const now = Date.now();
         lastTapTime.current = now;

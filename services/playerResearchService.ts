@@ -214,19 +214,19 @@ class PlayerResearchService {
             // Apply filters
             if (filter.positions?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.positions.includes(p.position)
+                    filter.positions!.includes(p.position)
                 );
             }
 
             if (filter.teams?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.teams.includes(p.team)
+                    filter.teams!.includes(p.team)
                 );
             }
 
             if (filter.status?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.status.includes(p.status as any)
+                    filter.status!.includes(p.status as any)
                 );
             }
 

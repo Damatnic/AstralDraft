@@ -112,7 +112,9 @@ class NetlifyAuthService {
           isLoading: false
         };
 
-        this.storeTokens(this.state.tokens);
+        if (this.state.tokens) {
+          this.storeTokens(this.state.tokens);
+        }
         this.scheduleTokenRefresh();
         this.notifyListeners();
 
@@ -160,7 +162,9 @@ class NetlifyAuthService {
           isLoading: false
         };
 
-        this.storeTokens(this.state.tokens);
+        if (this.state.tokens) {
+          this.storeTokens(this.state.tokens);
+        }
         this.scheduleTokenRefresh();
         this.notifyListeners();
 

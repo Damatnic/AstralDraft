@@ -113,7 +113,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             const analysis = await oracleHistoricalAnalyticsService.getHistoricalTrendAnalysis(timeframe);
             setTrendAnalysis(analysis);
         } catch (err) {
-            throw new Error(`Failed to load trend analysis: ${err.message}`);
+            throw new Error(`Failed to load trend analysis: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsLoadingTrends(false);
         }
@@ -125,7 +125,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             const breakdown = await oracleHistoricalAnalyticsService.getAccuracyBreakdown();
             setAccuracyBreakdown(breakdown);
         } catch (err) {
-            throw new Error(`Failed to load accuracy breakdown: ${err.message}`);
+            throw new Error(`Failed to load accuracy breakdown: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsLoadingBreakdown(false);
         }
@@ -136,7 +136,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             const records = await oracleHistoricalAnalyticsService['getHistoricalRecords']();
             setHistoricalRecords(records);
         } catch (err) {
-            throw new Error(`Failed to load historical records: ${err.message}`);
+            throw new Error(`Failed to load historical records: ${err instanceof Error ? err.message : String(err)}`);
         }
     };
     
@@ -146,7 +146,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             const insights = await oracleHistoricalAnalyticsService.getAdvancedInsights();
             setAdvancedInsights(insights);
         } catch (err) {
-            throw new Error(`Failed to load advanced insights: ${err.message}`);
+            throw new Error(`Failed to load advanced insights: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsLoadingInsights(false);
         }
@@ -179,7 +179,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
                 await loadAccuracyBreakdown();
             }
         } catch (err) {
-            setError(`Failed to record prediction: ${err.message}`);
+            setError(`Failed to record prediction: ${err instanceof Error ? err.message : String(err)}`);
         }
     }, []);
     
@@ -190,7 +190,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
         try {
             return await oracleHistoricalAnalyticsService.exportHistoricalData(format, filters);
         } catch (err) {
-            setError(`Failed to export data: ${err.message}`);
+            setError(`Failed to export data: ${err instanceof Error ? err.message : String(err)}`);
             throw err;
         }
     }, []);
@@ -204,7 +204,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             await refreshAnalytics();
             return result;
         } catch (err) {
-            setError(`Failed to import data: ${err.message}`);
+            setError(`Failed to import data: ${err instanceof Error ? err.message : String(err)}`);
             throw err;
         }
     }, [refreshAnalytics]);
@@ -228,7 +228,7 @@ export function useHistoricalAnalytics(): UseHistoricalAnalyticsResult {
             );
             setPerformanceComparison(comparison);
         } catch (err) {
-            setError(`Failed to compare performance: ${err.message}`);
+            setError(`Failed to compare performance: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setIsLoadingComparison(false);
         }

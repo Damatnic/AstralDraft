@@ -423,25 +423,25 @@ class DraftPreparationService {
             // Apply filters
             if (filter.positions?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.positions.includes(p.position)
+                    filter.positions!.includes(p.position)
                 );
             }
 
             if (filter.tiers?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.tiers.includes(p.tier)
+                    filter.tiers!.includes(p.tier)
                 );
             }
 
             if (filter.riskLevel?.length) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    filter.riskLevel.includes(p.riskLevel)
+                    filter.riskLevel!.includes(p.riskLevel)
                 );
             }
 
             if (filter.adpRange) {
                 filteredPlayers = filteredPlayers.filter(p => 
-                    p.adp >= filter.adpRange[0] && p.adp <= filter.adpRange[1]
+                    p.adp >= filter.adpRange![0] && p.adp <= filter.adpRange![1]
                 );
             }
 

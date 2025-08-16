@@ -375,6 +375,7 @@ expect.extend({
 
 // Type declarations for custom matchers
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace jest {
         interface Matchers<R> {
             toBeAccessible(): R;
@@ -385,6 +386,7 @@ declare global {
         }
     }
     
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace NodeJS {
         interface Global {
             testUtils: {

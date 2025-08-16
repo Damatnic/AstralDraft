@@ -29,10 +29,14 @@ interface PushSubscription {
 
 interface NotificationPreferences {
   predictions: boolean;
+  result: boolean;
   results: boolean;
   challenges: boolean;
+  challenge: boolean;
   achievements: boolean;
+  achievement: boolean;
   system: boolean;
+  prediction: boolean;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
   emailDigest: 'none' | 'daily' | 'weekly';
@@ -51,9 +55,13 @@ class RealtimeNotificationService {
   private userId: string | null = null;
   private preferences: NotificationPreferences = {
     predictions: true,
+    result: true,
     results: true,
+    challenge: true,
     challenges: true,
+    achievement: true,
     achievements: true,
+    prediction: true,
     system: true,
     soundEnabled: true,
     vibrationEnabled: true,
@@ -225,7 +233,13 @@ class RealtimeNotificationService {
    */
   private handleNotification(notification: NotificationData): void {
     // Check if notification type is enabled in preferences
-    if (!this.preferences[notification.type]) {
+    const typeKey = notification.type === 'prediction' ? 'predictions' : 
+                   notification.type === 'result' ? 'results' :
+                   notification.type === 'challenge' ? 'challenges' :
+                   notification.type === 'achievement' ? 'achievements' :
+                   'system';
+    
+    if (!this.preferences[typeKey as keyof NotificationPreferences]) {
       return;
     }
 

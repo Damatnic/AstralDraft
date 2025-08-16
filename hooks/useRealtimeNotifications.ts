@@ -38,11 +38,11 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
       title: notification.title,
       message: notification.message,
       timestamp: notification.timestamp,
-      isRead: notification.isRead,
+      isRead: false, // Default to unread
       priority: notification.priority,
-      category: getCategory(notification.source),
+      category: getCategory(notification.type),
       actionUrl: notification.actionUrl,
-      data: notification.data
+      data: notification.metadata
     };
   }, []);
 
@@ -72,7 +72,7 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     let soundFile = '/sounds/notification.mp3';
     if (notification.priority === 'high') {
       soundFile = '/sounds/high-priority.mp3';
-    } else if (notification.source === 'oracle') {
+    } else if (notification.type === 'prediction') {
       soundFile = '/sounds/oracle.mp3';
     }
 
@@ -93,10 +93,10 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     // Show toast for important notifications
     const shouldShowToast = 
       notification.priority === 'high' ||
-      notification.type === 'deadline_warning' ||
-      notification.type === 'result_announced' ||
-      notification.type === 'streak_milestone' ||
-      notification.source === 'admin';
+      notification.type === 'prediction' ||
+      notification.type === 'result' ||
+      notification.type === 'achievement' ||
+      notification.type === 'system';
 
     if (shouldShowToast) {
       showToast(notification);
@@ -125,7 +125,17 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     minutesRemaining: number;
     userId?: string;
   }) => {
-    realtimeNotificationService.emit('prediction_deadline_warning', data);
+    // Create a notification for deadline warning
+    const notification: RealtimeNotification = {
+      id: `deadline-${Date.now()}`,
+      type: 'prediction',
+      title: 'Prediction Deadline Warning',
+      message: `Deadline approaching for: ${data.question}`,
+      timestamp: new Date(),
+      priority: 'high',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerPredictionResult = useCallback((data: {
@@ -135,7 +145,17 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     pointsEarned: number;
     userId?: string;
   }) => {
-    realtimeNotificationService.emit('prediction_result_available', data);
+    // Create a notification for result
+    const notification: RealtimeNotification = {
+      id: `result-${Date.now()}`,
+      type: 'result',
+      title: 'Prediction Result Available',
+      message: `Result for: ${data.question}`,
+      timestamp: new Date(),
+      priority: 'high',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerAccuracyUpdate = useCallback((data: {
@@ -143,14 +163,34 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     previousAccuracy: number;
     userId?: string;
   }) => {
-    realtimeNotificationService.emit('oracle_accuracy_update', data);
+    // Create a notification for accuracy update
+    const notification: RealtimeNotification = {
+      id: `accuracy-${Date.now()}`,
+      type: 'result',
+      title: 'Oracle Accuracy Update',
+      message: `Current accuracy: ${data.newAccuracy}%`,
+      timestamp: new Date(),
+      priority: 'low',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerStreakMilestone = useCallback((data: {
     streakCount: number;
     userId?: string;
   }) => {
-    realtimeNotificationService.emit('streak_milestone', data);
+    // Create a notification for streak
+    const notification: RealtimeNotification = {
+      id: `streak-${Date.now()}`,
+      type: 'achievement',
+      title: 'Streak Milestone',
+      message: `${data.streakCount} day streak!`,
+      timestamp: new Date(),
+      priority: 'medium',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerContestUpdate = useCallback((data: {
@@ -158,7 +198,17 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     contestName: string;
     participants: string[];
   }) => {
-    realtimeNotificationService.emit('contest_started', data);
+    // Create a notification for contest
+    const notification: RealtimeNotification = {
+      id: `contest-${Date.now()}`,
+      type: 'challenge',
+      title: 'Contest Started',
+      message: data.contestName,
+      timestamp: new Date(),
+      priority: 'high',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerGameScoreUpdate = useCallback((data: {
@@ -168,7 +218,17 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     homeScore: number;
     awayScore: number;
   }) => {
-    realtimeNotificationService.emit('game_score_update', data);
+    // Create a notification for game score
+    const notification: RealtimeNotification = {
+      id: `score-${Date.now()}`,
+      type: 'result',
+      title: 'Game Score Update',
+      message: `${data.homeTeam} ${data.homeScore} - ${data.awayScore} ${data.awayTeam}`,
+      timestamp: new Date(),
+      priority: 'low',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerPlayerInjuryUpdate = useCallback((data: {
@@ -177,7 +237,17 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     team: string;
     injuryStatus: string;
   }) => {
-    realtimeNotificationService.emit('player_injury_update', data);
+    // Create a notification for injury
+    const notification: RealtimeNotification = {
+      id: `injury-${Date.now()}`,
+      type: 'system',
+      title: 'Player Injury Update',
+      message: `${data.playerName}: ${data.injuryStatus}`,
+      timestamp: new Date(),
+      priority: data.injuryStatus.toLowerCase().includes('out') ? 'high' : 'medium',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const triggerAdminAnnouncement = useCallback((data: {
@@ -185,20 +255,37 @@ export const useRealtimeNotifications = (options: RealtimeNotificationHookOption
     message: string;
     priority: 'low' | 'medium' | 'high';
   }) => {
-    realtimeNotificationService.emit('admin_announcement', data);
+    // Create a notification for admin announcement
+    const notification: RealtimeNotification = {
+      id: `admin-${Date.now()}`,
+      type: 'system',
+      title: 'Admin Announcement',
+      message: data.message,
+      timestamp: new Date(),
+      priority: 'high',
+      metadata: data
+    };
+    handleRealtimeNotification(notification);
   }, []);
 
   const testNotification = useCallback(() => {
-    realtimeNotificationService.testNotification();
+    realtimeNotificationService.sendTestNotification();
   }, []);
 
   // Get real-time service metrics
   const getMetrics = useCallback(() => {
-    return realtimeNotificationService.getMetrics();
+    // Metrics not directly available from service
+    const allNotifications = realtimeNotificationService.getNotifications();
+    return {
+      totalNotifications: allNotifications.length,
+      unreadCount: realtimeNotificationService.getUnreadCount(),
+      connected: realtimeNotificationService.isConnectedToService()
+    };
   }, []);
 
   const getActiveConnections = useCallback(() => {
-    return realtimeNotificationService.getActiveConnections();
+    // Return connection status
+    return realtimeNotificationService.getConnectionStatus();
   }, []);
 
   return {

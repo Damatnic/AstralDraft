@@ -682,7 +682,7 @@ class OracleSocialService {
                     action,
                     targetId: postId,
                     targetType: 'POST',
-                    reason,
+                    reason: reason || '',
                     timestamp: new Date().toISOString()
                 };
 

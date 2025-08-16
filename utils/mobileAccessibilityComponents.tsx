@@ -27,7 +27,7 @@ export const AccessibleButton: React.FC<AccessibleButtonProps> = ({
     type = 'button'
 }) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
-    useKeyboardNavigation(buttonRef);
+    useKeyboardNavigation(buttonRef as React.RefObject<HTMLElement>);
 
     return (
         <button

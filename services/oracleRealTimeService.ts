@@ -239,9 +239,9 @@ class OracleRealTimeService extends EventEmitter {
             this.activeConnections.set(userId, ws);
             
             // Setup WebSocket event handlers for this user
-            ws.on('message', (data: Buffer) => this.handleUserMessage(userId, data));
-            ws.on('close', () => this.handleUserDisconnect(userId));
-            ws.on('error', (error) => this.handleUserError(userId, error));
+            ws.addEventListener('message', (event: MessageEvent) => this.handleUserMessage(userId, event.data));
+            ws.addEventListener('close', () => this.handleUserDisconnect(userId));
+            ws.addEventListener('error', (error: Event) => this.handleUserError(userId, error));
         }
 
         // Send welcome message

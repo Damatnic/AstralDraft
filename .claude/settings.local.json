@@ -26,7 +26,11 @@
       "Bash(touch:*)",
       "Bash(npm run setup:database:*)",
       "Bash(npm run type-check:*)",
-      "Bash(timeout 60 npm test)"
+      "Bash(timeout 60 npm test)",
+      "Bash(npx kill-port:*)",
+      "Bash(true)",
+      "Bash(npx http-server:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": [],

@@ -56,17 +56,17 @@ const initializeApp = () => {
       reactAvailable: !!React,
       reactChildrenAvailable: !!(React && React.Children),
       reactDomAvailable: !!ReactDOM,
-      errorMessage: error.message,
-      errorStack: error.stack
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : 'No stack trace available'
     });
     
     rootElement.innerHTML = `
       <h1>Application Error</h1>
-      <p>Failed to load the application. Error: ${error.message}</p>
+      <p>Failed to load the application. Error: ${error instanceof Error ? error.message : String(error)}</p>
       <p>Please refresh the page or contact support if the issue persists.</p>
       <details>
         <summary>Technical Details</summary>
-        <pre>${error.stack}</pre>
+        <pre>${error instanceof Error ? error.stack : 'No stack trace available'}</pre>
       </details>
     `;
   }

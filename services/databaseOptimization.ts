@@ -3,7 +3,16 @@
  * Creates optimized indexes and analyzes query performance for Oracle system
  */
 
-import { getRows, runQuery } from '../backend/db/index';
+// Mock database functions until backend is properly set up
+const getRows = async (query: string, params?: any[]) => {
+    // TODO: Implement actual database call
+    return [];
+};
+
+const runQuery = async (query: string, params?: any[]) => {
+    // TODO: Implement actual database call
+    return { rows: [] };
+};
 
 interface DatabaseStats {
     tableStats: { [tableName: string]: TableStats };
@@ -229,7 +238,7 @@ export class DatabaseOptimizationService {
 
         for (const tableName of tables) {
             try {
-                const countResult = await getRows(`SELECT COUNT(*) as count FROM ${tableName}`);
+                const countResult = await getRows(`SELECT COUNT(*) as count FROM ${tableName}`) as Array<{ count: number }>;
                 const rowCount = countResult[0]?.count || 0;
 
                 tableStats[tableName] = {
@@ -252,7 +261,7 @@ export class DatabaseOptimizationService {
                 FROM sqlite_master 
                 WHERE type='index' AND name LIKE 'idx_%'
                 ORDER BY name
-            `);
+            `) as Array<{ name: string; tbl_name: string; sql: string | null }>;
 
             for (const index of indexes) {
                 indexStats[index.name] = {

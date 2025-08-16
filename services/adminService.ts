@@ -404,7 +404,7 @@ class AdminService {
       type: contest.type,
       status: contest.status as any,
       participantCount: contest.participants.length,
-      maxParticipants: contest.maxParticipants,
+      maxParticipants: contest.maxParticipants || 0,
       entryFee: contest.entryFee,
       prizePool: contest.prizePool.totalPrize,
       startDate: contest.startDate,

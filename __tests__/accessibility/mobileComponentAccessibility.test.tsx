@@ -32,7 +32,7 @@ jest.mock('../../hooks/useMediaQuery', () => ({
 }));
 
 jest.mock('../../utils/mobilePerformanceUtils', () => ({
-    useThrottle: (fn: Function) => fn
+    useThrottle: (fn: (...args: any[]) => any) => fn
 }));
 
 jest.mock('framer-motion', () => ({

@@ -612,7 +612,7 @@ class InjuryTrackingService {
         })
       );
 
-      const validAnalysis = playerAnalysis.filter(Boolean);
+      const validAnalysis = playerAnalysis.filter((analysis): analysis is NonNullable<typeof analysis> => analysis !== null);
 
       // Calculate overall impact
       const totalFantasyPointsLost = validAnalysis.reduce(

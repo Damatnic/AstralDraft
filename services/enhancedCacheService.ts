@@ -529,7 +529,7 @@ class EnhancedCacheService {
                     await this.set(type, cacheKey, result, { customTTL: ttl });
                 }
                 
-                return result;
+                return result as R;
             };
 
             return descriptor;

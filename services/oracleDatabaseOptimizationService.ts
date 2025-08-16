@@ -3,6 +3,7 @@
  * Optimized database queries with caching, connection pooling, and batch operations
  */
 
+// @ts-ignore - backend module
 import { runQuery, getRow, getRows } from '../backend/db/index';
 import { oraclePerformanceCache } from './oraclePerformanceCacheService';
 
@@ -231,7 +232,7 @@ class OracleDatabaseOptimizationService {
         );
 
         // Add ranking
-        const rankedLeaderboard = leaderboard.map((entry, index) => ({
+        const rankedLeaderboard = leaderboard.map((entry: any, index: number) => ({
             ...entry,
             rank: index + 1
         }));

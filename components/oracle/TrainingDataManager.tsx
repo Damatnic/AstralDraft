@@ -540,7 +540,7 @@ const TrainingDataManager = memo(() => {
                 throw new Error('Cannot start training: No training data available');
             }
             
-            if (trainingConfig.maxEpochs <= 0 || trainingConfig.batchSize <= 0) {
+            if (!trainingConfig.maxEpochs || trainingConfig.maxEpochs <= 0 || !trainingConfig.batchSize || trainingConfig.batchSize <= 0) {
                 throw new Error('Cannot start training: Invalid training configuration');
             }
             
@@ -726,13 +726,13 @@ const TrainingDataManager = memo(() => {
     }, [trainingProgress.currentStep, trainingProgress.totalSteps]);
 
     const trainingSplitPercentages = useMemo(() => ({
-        training: Math.round(trainingConfig.trainingSplit * 100),
-        validation: Math.round(trainingConfig.validationSplit * 100)
+        training: Math.round((trainingConfig.trainingSplit || 0.8) * 100),
+        validation: Math.round((trainingConfig.validationSplit || 0.2) * 100)
     }), [trainingConfig.trainingSplit, trainingConfig.validationSplit]);
 
     const formattedTrainingMetrics = useMemo(() => ({
-        accuracy: trainingProgress.accuracy.toFixed(3),
-        loss: trainingProgress.loss.toFixed(3),
+        accuracy: (trainingProgress.accuracy || 0).toFixed(3),
+        loss: (trainingProgress.loss || 0).toFixed(3),
         overallAccuracy: modelMetrics.overallAccuracy.toFixed(3)
     }), [trainingProgress.accuracy, trainingProgress.loss, modelMetrics.overallAccuracy]);
 
@@ -1774,7 +1774,7 @@ const TrainingDataManager = memo(() => {
                                 <input 
                                     id="training-split"
                                     type="number" 
-                                    value={Math.round(trainingConfig.trainingSplit * 100)}
+                                    value={Math.round((trainingConfig.trainingSplit || 0.8) * 100)}
                                     onChange={(e) => updateTrainingConfig({ 
                                         trainingSplit: parseInt(e.target.value) / 100,
                                         validationSplit: 1 - (parseInt(e.target.value) / 100)
@@ -1923,11 +1923,11 @@ const TrainingDataManager = memo(() => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div className="p-3 bg-gray-800/50 rounded-lg">
                                 <div className="text-xs sm:text-sm text-gray-400">Accuracy</div>
-                                <div className="text-xl sm:text-2xl font-bold text-green-400">{trainingProgress.accuracy.toFixed(3)}</div>
+                                <div className="text-xl sm:text-2xl font-bold text-green-400">{(trainingProgress.accuracy || 0).toFixed(3)}</div>
                             </div>
                             <div className="p-3 bg-gray-800/50 rounded-lg">
                                 <div className="text-xs sm:text-sm text-gray-400">Loss</div>
-                                <div className="text-xl sm:text-2xl font-bold text-red-400">{trainingProgress.loss.toFixed(3)}</div>
+                                <div className="text-xl sm:text-2xl font-bold text-red-400">{(trainingProgress.loss || 0).toFixed(3)}</div>
                             </div>
                         </div>
 

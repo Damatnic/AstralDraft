@@ -484,7 +484,7 @@ function createMockApp(): express.Application {
   });
 
   // Rate limiting simulation
-  let requestCounts = new Map();
+  const requestCounts = new Map();
   app.use('/api/players', (req, res, next) => {
     const ip = req.ip || 'test-ip';
     const count = requestCounts.get(ip) || 0;

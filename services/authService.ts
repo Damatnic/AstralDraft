@@ -226,13 +226,13 @@ class AuthService {
    */
   createAuthenticatedFetch() {
     return async (url: string, options: RequestInit = {}) => {
-      const headers = {
+      const headers: HeadersInit = {
         'Content-Type': 'application/json',
-        ...options.headers
+        ...(options.headers as Record<string, string>)
       };
 
       if (this.sessionToken) {
-        headers['Authorization'] = `Bearer ${this.sessionToken}`;
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${this.sessionToken}`;
       }
 
       return fetch(url, {

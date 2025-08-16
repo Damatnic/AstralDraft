@@ -202,7 +202,11 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(registration => {
+          // Use relative path for service worker to work with subdirectory deployments
+          const swPath = window.location.pathname.endsWith('/') 
+            ? window.location.pathname + 'sw.js'
+            : window.location.pathname.replace(/\/[^\/]*$/, '/sw.js');
+          navigator.serviceWorker.register(swPath).then(registration => {
             console.log('SW registered: ', registration);
           }).catch(registrationError => {
             console.log('SW registration failed: ', registrationError);

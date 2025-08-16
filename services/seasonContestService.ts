@@ -705,7 +705,7 @@ class SeasonContestService {
       
       case 'high_confidence':
         // All predictions made with high confidence (80%+)
-        return Object.values(prediction.predictions).every(p => p.confidence >= 80);
+        return Object.values(prediction.predictions).every(p => (p.confidence || 0) >= 80);
       
       case 'contrarian_pick': {
         // Made prediction against majority - simplified check for now

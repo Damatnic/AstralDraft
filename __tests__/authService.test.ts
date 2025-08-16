@@ -78,7 +78,7 @@ describe('AuthService', () => {
                 is_active: true
             };
 
-            const { getRow } = require('../backend/db/index');
+            const getRow = (jest.requireMock('../backend/db/index') as any).getRow;
             getRow.mockReturnValue(mockUser);
 
             const result = await getUserById(123);
@@ -87,7 +87,7 @@ describe('AuthService', () => {
 
         it('should handle database errors gracefully', async () => {
             // Mock database error
-            const { getRow } = require('../backend/db/index');
+            const getRow = (jest.requireMock('../backend/db/index') as any).getRow;
             getRow.mockImplementation(() => {
                 throw new Error('Database connection failed');
             });
@@ -97,7 +97,7 @@ describe('AuthService', () => {
         });
 
         it('should return null for non-existent user', async () => {
-            const { getRow } = require('../backend/db/index');
+            const getRow = (jest.requireMock('../backend/db/index') as any).getRow;
             getRow.mockReturnValue(null);
 
             const result = await getUserById(999);

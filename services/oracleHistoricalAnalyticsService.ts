@@ -463,7 +463,7 @@ class OracleHistoricalAnalyticsService {
                 errors
             };
         } catch (error) {
-            throw new Error(`Import failed: ${error.message}`);
+            throw new Error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -990,8 +990,8 @@ class OracleHistoricalAnalyticsService {
         ]);
 
         for (const type of allTypes) {
-            const currentAcc = currentStats[type]?.accuracy || 0;
-            const previousAcc = previousStats[type]?.accuracy || 0;
+            const currentAcc = (currentStats as any)[type]?.accuracy || 0;
+            const previousAcc = (previousStats as any)[type]?.accuracy || 0;
             changes[type] = currentAcc - previousAcc;
         }
 

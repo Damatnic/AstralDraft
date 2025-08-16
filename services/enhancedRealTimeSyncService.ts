@@ -82,7 +82,7 @@ export interface PerformanceMetrics {
 }
 
 class EnhancedRealTimeSyncService extends EventEmitter {
-    private wss: WebSocketServer;
+    private wss!: WebSocketServer;
     private readonly syncStates: Map<string, SyncState> = new Map();
     private readonly clientConnections: Map<string, ClientConnection> = new Map();
     private readonly offlineQueue: Map<string, OfflineSync> = new Map();
@@ -723,7 +723,7 @@ class EnhancedRealTimeSyncService extends EventEmitter {
 
     private authenticateConnection(userId: string, token?: string | null): boolean {
         // Simplified authentication - in production, validate JWT token
-        return userId && userId.length > 0;
+        return !!(userId && userId.length > 0);
     }
 
     private initializeSyncState(leagueId: string): void {
