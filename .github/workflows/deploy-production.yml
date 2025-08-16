@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
+      image-digest: ${{ steps.build-frontend.outputs.digest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -158,36 +158,35 @@ jobs:
     needs: [build-frontend]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    environment:
-      name: netlify-production
-      url: ${{ steps.deploy.outputs.deploy-url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: ./dist
           
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+        
       - name: Deploy to Netlify
         id: deploy
-        uses: netlify/actions/deploy@master
-        with:
-          publish-dir: ./dist
-          production-deploy: true
+        run: |
+          netlify deploy --prod --dir=./dist --site=${{ secrets.NETLIFY_SITE_ID }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
   deploy-production:
     needs: [build-docker, deploy-netlify]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://astraldraft.com
     steps:
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1.0.0
@@ -205,9 +204,6 @@ jobs:
     needs: [build-docker]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: https://staging.astraldraft.com
     steps:
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1.0.0
