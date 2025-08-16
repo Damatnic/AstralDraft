@@ -249,7 +249,7 @@ const MobileNavigation: React.FC = () => {
                       <div className="flex items-center gap-2">
                         {Boolean(item.badge && item.badge > 0) && (
                           <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                            {item.badge > 99 ? '99+' : item.badge}
+                            {item.badge && item.badge > 99 ? '99+' : item.badge}
                           </span>
                         )}
                         <ArrowRightIcon className={`

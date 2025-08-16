@@ -5,6 +5,7 @@
   "description": "Elite Fantasy Football",
   "main": "index.tsx",
   "scripts": {
+    "prestart": "node scripts/startup-check.js",
     "dev": "vite --port 8765",
     "dev:oracle": "vite --port 8765 --open",
     "build": "vite build --mode production",

@@ -327,7 +327,7 @@ const CompareTradesTab: React.FC<{
       {tradeComparison.proposals.length > 0 ? (
         <div className="comparison-results">
           <div className="rankings-list">
-            {tradeComparison.rankings.map((ranking, index) => (
+            {tradeComparison.rankings.map((ranking: any, index: number) => (
               <div key={ranking.tradeId} className="ranking-item">
                 <span className="rank">#{index + 1}</span>
                 <span className="score">{ranking.score}%</span>
@@ -370,7 +370,7 @@ const RecommendationsTab: React.FC<{
           <div className="recommendation-section">
             <h4>Players to Consider Trading</h4>
             <ul className="recommendation-list">
-              {tradeRecommendations.recommendations.playerToTrade.map((rec, index) => (
+              {tradeRecommendations.recommendations.playerToTrade.map((rec: any, index: number) => (
                 <li key={index} className="recommendation-item">{rec}</li>
               ))}
             </ul>
@@ -379,7 +379,7 @@ const RecommendationsTab: React.FC<{
           <div className="recommendation-section">
             <h4>Players to Target</h4>
             <ul className="recommendation-list">
-              {tradeRecommendations.recommendations.playersToTarget.map((rec, index) => (
+              {tradeRecommendations.recommendations.playersToTarget.map((rec: any, index: number) => (
                 <li key={index} className="recommendation-item">{rec}</li>
               ))}
             </ul>
@@ -388,7 +388,7 @@ const RecommendationsTab: React.FC<{
           <div className="recommendation-section">
             <h4>Trade Strategies</h4>
             <ul className="recommendation-list">
-              {tradeRecommendations.recommendations.tradeStrategies.map((rec, index) => (
+              {tradeRecommendations.recommendations.tradeStrategies.map((rec: any, index: number) => (
                 <li key={index} className="recommendation-item">{rec}</li>
               ))}
             </ul>
@@ -397,7 +397,7 @@ const RecommendationsTab: React.FC<{
           <div className="recommendation-section">
             <h4>Market Trends</h4>
             <ul className="recommendation-list">
-              {tradeRecommendations.recommendations.marketTrends.map((rec, index) => (
+              {tradeRecommendations.recommendations.marketTrends.map((rec: any, index: number) => (
                 <li key={index} className="recommendation-item">{rec}</li>
               ))}
             </ul>

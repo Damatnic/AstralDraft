@@ -130,7 +130,7 @@ export const AccessiblePullToRefresh: React.FC<AccessiblePullToRefreshProps> = (
         }
     }, [onRefresh, disabled, isRefreshing]);
 
-    useKeyboardNavigation(containerRef);
+    useKeyboardNavigation(containerRef as React.RefObject<HTMLElement>);
 
     const getPullIndicatorColor = () => {
         switch (pullState) {

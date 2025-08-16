@@ -188,7 +188,7 @@ export const useAdvancedTouchGestures = (
       // Start long press timer
       if (longPressRef.current) {
         longPressTimer.current = setTimeout(() => {
-          if (gestureState.distance < longPress.threshold) {
+          if (gestureState.distance < (longPress.threshold || 10)) {
             longPressRef.current?.(point);
           }
         }, longPress.duration);
@@ -197,9 +197,9 @@ export const useAdvancedTouchGestures = (
       // Check for double tap
       if (doubleTapRef.current && lastTapTime.current) {
         const timeSinceLastTap = point.timestamp - lastTapTime.current;
-        if (timeSinceLastTap < doubleTap.delay && lastTapPoint.current) {
+        if (timeSinceLastTap < (doubleTap.delay || 300) && lastTapPoint.current) {
           const tapDistance = getDistance(point, lastTapPoint.current);
-          if (tapDistance < doubleTap.threshold) {
+          if (tapDistance < (doubleTap.threshold || 10)) {
             doubleTapRef.current(point);
             lastTapTime.current = 0;
             lastTapPoint.current = null;
@@ -247,7 +247,7 @@ export const useAdvancedTouchGestures = (
       }));
 
       // Clear long press timer on movement
-      if (longPressTimer.current && distance > longPress.threshold) {
+      if (longPressTimer.current && distance > (longPress.threshold || 10)) {
         clearTimeout(longPressTimer.current);
         longPressTimer.current = null;
       }
@@ -264,7 +264,7 @@ export const useAdvancedTouchGestures = (
       
       if (initialTouchDistance.current > 0) {
         const scale = currentDistance / initialTouchDistance.current;
-        if (Math.abs(scale - 1) > (pinch.threshold - 1)) {
+        if (Math.abs(scale - 1) > ((pinch.threshold || 1.2) - 1)) {
           pinchRef.current(scale, currentCenter);
         }
       }
@@ -290,7 +290,7 @@ export const useAdvancedTouchGestures = (
       const velocity = gestureState.velocity;
       const direction = gestureState.direction;
 
-      if (distance > swipe.threshold && velocity > swipe.velocityThreshold) {
+      if (distance > (swipe.threshold || 50) && velocity > (swipe.velocityThreshold || 0.3)) {
         const gesture = { ...gestureState };
         
         switch (direction) {

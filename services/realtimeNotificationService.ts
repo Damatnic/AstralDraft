@@ -5,7 +5,7 @@
 
 import { io, Socket } from 'socket.io-client';
 
-interface NotificationData {
+export interface RealtimeNotification {
   id: string;
   type: 'prediction' | 'result' | 'challenge' | 'achievement' | 'system';
   title: string;
@@ -15,6 +15,9 @@ interface NotificationData {
   actionUrl?: string;
   metadata?: Record<string, any>;
 }
+
+// Alias for internal use
+type NotificationData = RealtimeNotification;
 
 interface PushSubscription {
   endpoint: string;
@@ -444,6 +447,24 @@ class RealtimeNotificationService {
   public addListener(callback: (notification: NotificationData) => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
+  }
+
+  /**
+   * Alias for addListener (for compatibility)
+   */
+  public on(event: string, callback: (notification: NotificationData) => void): void {
+    if (event === 'notification') {
+      this.listeners.add(callback);
+    }
+  }
+
+  /**
+   * Remove notification listener (for compatibility)
+   */
+  public off(event: string, callback: (notification: NotificationData) => void): void {
+    if (event === 'notification') {
+      this.listeners.delete(callback);
+    }
   }
 
   /**

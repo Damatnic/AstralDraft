@@ -265,17 +265,18 @@ export const focusManagement = {
         const firstElement = focusableElements[0] as HTMLElement;
         const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
-        const handleTabKey = (e: KeyboardEvent) => {
-            if (e.key === 'Tab') {
-                if (e.shiftKey) {
+        const handleTabKey = (e: Event) => {
+            const keyboardEvent = e as KeyboardEvent;
+            if (keyboardEvent.key === 'Tab') {
+                if (keyboardEvent.shiftKey) {
                     if (document.activeElement === firstElement) {
                         lastElement.focus();
-                        e.preventDefault();
+                        keyboardEvent.preventDefault();
                     }
                 } else {
                     if (document.activeElement === lastElement) {
                         firstElement.focus();
-                        e.preventDefault();
+                        keyboardEvent.preventDefault();
                     }
                 }
             }

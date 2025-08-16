@@ -213,7 +213,7 @@ export const EnhancedMobileNav: React.FC<EnhancedMobileNavProps> = ({
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, delay: 0.1 }}
                 >
-                  {item.badge > 99 ? '99+' : item.badge}
+                  {item.badge && item.badge > 99 ? '99+' : item.badge}
                 </motion.div>
               )}
 

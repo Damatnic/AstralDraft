@@ -240,7 +240,7 @@ const OracleRealTimePredictionInterface: React.FC<Props> = ({
                     week: p.week,
                     type: p.type as any, // Type assertion for compatibility
                     question: p.question,
-                    options: p.options.map((opt, index) => ({
+                    options: p.options.map((opt: any, index: number) => ({
                         id: index,
                         text: opt,
                         probability: 1 / p.options.length, // Equal probability for display

@@ -28,7 +28,8 @@ import oracleEnsembleMLService, {
     TrainingProgress, 
     TrainingSession,
     ValidationReport,
-    DataValidationRule
+    DataValidationRule,
+    EnsembleModel
 } from '../../services/oracleEnsembleMachineLearningService';
 
 type TabType = 'overview' | 'datasets' | 'validation' | 'training' | 'performance' | 'config';
@@ -78,7 +79,11 @@ const TrainingDataManager = memo(() => {
         missingValues: 0,
         duplicates: 0
     });
-    const [modelMetrics, setModelMetrics] = useState({
+    const [modelMetrics, setModelMetrics] = useState<{
+        models: EnsembleModel[];
+        overallAccuracy: number;
+        lastTraining: string;
+    }>({
         models: [],
         overallAccuracy: 0.85,
         lastTraining: new Date().toISOString()

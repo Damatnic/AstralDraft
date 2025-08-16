@@ -56,7 +56,7 @@ const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
     const navRef = useRef<HTMLDivElement>(null);
 
     // Keyboard navigation for the bottom nav
-    useKeyboardNavigation(navRef);
+    useKeyboardNavigation(navRef as React.RefObject<HTMLElement>);
 
     const primaryNavItems: NavigationItem[] = [
         {

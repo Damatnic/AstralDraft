@@ -270,7 +270,7 @@ export const PermissionList: React.FC<PermissionListProps> = ({
                 </h5>
               )}
               <div className="flex flex-wrap gap-1">
-                {categoryPermissions.map(permission => (
+                {categoryPermissions.map((permission: Permission) => (
                   <span
                     key={permission}
                     className="inline-block px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded"

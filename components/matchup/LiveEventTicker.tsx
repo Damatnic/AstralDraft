@@ -6,16 +6,19 @@ import { useAppState } from '../../contexts/AppContext';
 import { formatRelativeTime } from '../../utils/time';
 import { FlameIcon } from '../icons/FlameIcon';
 import { ZapIcon } from '../icons/ZapIcon';
+import type { GamedayEventType } from '../../types';
 
 interface LiveEventTickerProps {
     matchupId: string;
 }
 
-const eventIcons = {
+const eventIcons: Record<GamedayEventType, React.ReactElement> = {
     TOUCHDOWN: <FlameIcon />,
     FIELD_GOAL: <ZapIcon />,
     BIG_PLAY: <ZapIcon />,
     REDZONE_ENTRY: <FlameIcon />,
+    INTERCEPTION: <ZapIcon />,
+    FUMBLE: <ZapIcon />,
 };
 
 const LiveEventTicker: React.FC<LiveEventTickerProps> = ({ matchupId }) => {

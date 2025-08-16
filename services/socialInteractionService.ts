@@ -314,7 +314,7 @@ export class SocialInteractionService {
             messages = messages.filter(m => m.messageType === filters.messageType);
         }
         if (filters.since) {
-            messages = messages.filter(m => m.timestamp >= filters.since);
+            messages = messages.filter(m => m.timestamp >= filters.since!);
         }
 
         // Sort by timestamp (newest first)

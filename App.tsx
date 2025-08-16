@@ -5,7 +5,11 @@
 import React from 'react';
 import { AppProvider, useAppState } from './contexts/AppContext';
 import { AuthProvider, AuthInitializer } from './contexts/AuthContext';
+// Import modern theme styles
+import './styles/theme.css';
 // Eager load only the most critical views that users will likely visit first
+import ModernDashboardView from './views/ModernDashboardView';
+import ModernAuthView from './views/ModernAuthView';
 import EnhancedDashboardView from './views/EnhancedDashboardView';
 import AuthView from './views/AuthView';
 
@@ -28,6 +32,7 @@ const StartSitToolView = React.lazy(() => import('./views/StartSitToolView'));
 const AssistantView = React.lazy(() => import('./views/AssistantView'));
 import { ErrorBoundary } from './components/core/ErrorBoundary';
 import { InstallPrompt, PWAStatusBanner } from './components/ui/InstallPrompt';
+import SuspenseLoader from './components/core/SuspenseLoader';
 const ProfileView = React.lazy(() => import('./views/ProfileView'));
 const LeagueCreationWizard = React.lazy(() => import('./components/league/LeagueCreationWizard'));
 const LeagueRulesView = React.lazy(() => import('./views/LeagueRulesView'));
@@ -186,12 +191,12 @@ const useViewNavigation = (currentView: View, activeLeague: any, userId: string)
     }, []);
 
     React.useEffect(() => {
-        const myTeam = activeLeague?.teams.find(t => t.owner.id === userId);
+        const myTeam = activeLeague?.teams.find((t: any) => t.owner.id === userId);
         let isRivalryWeek = false;
 
         if (activeLeague && myTeam && activeLeague.topRivalry) {
             const currentMatchup = activeLeague.schedule.find(
-                m => m.week === activeLeague.currentWeek && (m.teamA.teamId === myTeam.id || m.teamB.teamId === myTeam.id)
+                (m: any) => m.week === activeLeague.currentWeek && (m.teamA.teamId === myTeam.id || m.teamB.teamId === myTeam.id)
             );
 
             if (currentMatchup) {
@@ -234,7 +239,7 @@ const AppContent: React.FC = () => {
     const direction = useViewNavigation(state.currentView, activeLeague, state.user.id);
 
     if (state.user.id === 'guest') {
-        return <AuthView />;
+        return <ModernAuthView />;
     }
 
     const handleViewChange = (view: View) => {
@@ -242,13 +247,13 @@ const AppContent: React.FC = () => {
     };
 
     const renderMainViews = () => {
-        if (state.currentView === 'DASHBOARD') return <EnhancedDashboardView />;
+        if (state.currentView === 'DASHBOARD') return <ModernDashboardView />;
         if (state.currentView === 'LEAGUE_HUB') return <LeagueHubView />;
-        if (state.currentView === 'CREATE_LEAGUE') return <LeagueCreationWizard />;
-        if (state.currentView === 'DRAFT_ROOM') return <React.Suspense fallback={<div>Loading...</div>}><LazyDraftRoomView /></React.Suspense>;
+        if (state.currentView === 'CREATE_LEAGUE') return <React.Suspense fallback={<SuspenseLoader message="Loading League Creation..." />}><LeagueCreationWizard /></React.Suspense>;
+        if (state.currentView === 'DRAFT_ROOM') return <React.Suspense fallback={<SuspenseLoader message="Loading Draft Room..." />}><LazyDraftRoomView /></React.Suspense>;
         if (state.currentView === 'TEAM_HUB') return <TeamHubView />;
-        if (state.currentView === 'ANALYTICS_HUB') return <React.Suspense fallback={<div>Loading...</div>}><LazyAnalyticsHubView /></React.Suspense>;
-        if (state.currentView === 'REALTIME_ANALYTICS') return <React.Suspense fallback={<div>Loading...</div>}><LazyRealTimeAnalyticsView /></React.Suspense>;
+        if (state.currentView === 'ANALYTICS_HUB') return <React.Suspense fallback={<SuspenseLoader message="Loading Analytics Hub..." />}><LazyAnalyticsHubView /></React.Suspense>;
+        if (state.currentView === 'REALTIME_ANALYTICS') return <React.Suspense fallback={<SuspenseLoader message="Loading Real-Time Analytics..." />}><LazyRealTimeAnalyticsView /></React.Suspense>;
         if (state.currentView === 'HISTORICAL_ANALYTICS') return <HistoricalAnalyticsOverview />;
         if (state.currentView === 'LEAGUE_STANDINGS') return <LeagueStandingsView />;
         if (state.currentView === 'WAIVER_WIRE') return <WaiverWireView />;
@@ -260,7 +265,7 @@ const AppContent: React.FC = () => {
     const renderSecondaryViews = () => {
         if (state.currentView === 'PLAYOFF_BRACKET') return <PlayoffBracketView />;
         if (state.currentView === 'WEEKLY_REPORT') return <WeeklyReportView />;
-        if (state.currentView === 'LEAGUE_HISTORY') return <React.Suspense fallback={<div>Loading...</div>}><LazyLeagueHistoryView /></React.Suspense>;
+        if (state.currentView === 'LEAGUE_HISTORY') return <React.Suspense fallback={<SuspenseLoader message="Loading League History..." />}><LazyLeagueHistoryView /></React.Suspense>;
         if (state.currentView === 'SEASON_REVIEW') return <SeasonReviewView />;
         if (state.currentView === 'SEASON_ARCHIVE') return <SeasonArchiveView />;
         if (state.currentView === 'START_SIT_TOOL') return <StartSitToolView />;
@@ -272,11 +277,11 @@ const AppContent: React.FC = () => {
     };
 
     const renderAdminViews = () => {
-        if (state.currentView === 'COMMISSIONER_TOOLS') return <React.Suspense fallback={<div>Loading...</div>}><LazyCommissionerToolsView /></React.Suspense>;
+        if (state.currentView === 'COMMISSIONER_TOOLS') return <React.Suspense fallback={<SuspenseLoader message="Loading Commissioner Tools..." />}><LazyCommissionerToolsView /></React.Suspense>;
         if (state.currentView === 'DRAFT_STORY') return <DraftStoryView />;
         if (state.currentView === 'EDIT_ROSTER') return <EditRosterView />;
         if (state.currentView === 'DRAFT_PREP_CENTER') return <DraftPrepCenterView />;
-        if (state.currentView === 'PERFORMANCE_TRENDS') return <React.Suspense fallback={<div>Loading...</div>}><LazyPerformanceTrendsView /></React.Suspense>;
+        if (state.currentView === 'PERFORMANCE_TRENDS') return <React.Suspense fallback={<SuspenseLoader message="Loading Performance Trends..." />}><LazyPerformanceTrendsView /></React.Suspense>;
         if (state.currentView === 'SEASON_STORY') return <SeasonStoryView />;
         if (state.currentView === 'TEAM_COMPARISON') return <TeamComparisonView />;
         if (state.currentView === 'EDIT_LEAGUE_SETTINGS') return <EditLeagueSettingsView />;
@@ -290,7 +295,7 @@ const AppContent: React.FC = () => {
         if (state.currentView === 'CHAMPIONSHIP_ODDS') return <ChampionshipOddsView />;
         if (state.currentView === 'PROJECTED_STANDINGS') return <ProjectedStandingsView />;
         if (state.currentView === 'TROPHY_ROOM') return <TrophyRoomView />;
-        if (state.currentView === 'BEAT_THE_ORACLE') return <React.Suspense fallback={<div>Loading...</div>}><LazyBeatTheOracleView /></React.Suspense>;
+        if (state.currentView === 'BEAT_THE_ORACLE') return <React.Suspense fallback={<SuspenseLoader message="Loading Beat The Oracle..." />}><LazyBeatTheOracleView /></React.Suspense>;
         if (state.currentView === 'FINANCE_TRACKER') return <FinanceTrackerView />;
         if (state.currentView === 'CUSTOM_SCORING_EDITOR') return <CustomScoringEditorView />;
         if (state.currentView === 'WEEKLY_RECAP_VIDEO') return <WeeklyRecapVideoView />;
@@ -354,7 +359,11 @@ const AppContent: React.FC = () => {
                         </AnimatePresence>
                     </MainLayout>
                     <AnimatePresence>
-                        {state.isMobileNavOpen && <MobileNavMenu />}
+                        {state.isMobileNavOpen && (
+                            <React.Suspense fallback={<SuspenseLoader message="Loading Navigation..." size="sm" />}>
+                                <MobileNavMenu />
+                            </React.Suspense>
+                        )}
                     </AnimatePresence>
                 </>
             )}

@@ -18,24 +18,25 @@ export default defineConfig(({ mode }) => {
           apply: 'build', // Only run during build, not dev
           generateBundle() {
             // Use dynamic import to avoid bundling Node.js modules
-            return new Promise(async (resolve) => {
-              try {
-                const { copyFileSync, existsSync } = await import('fs');
-                const { resolve: pathResolve } = await import('path');
-                
-                const swPath = pathResolve(process.cwd(), 'sw.js');
-                const distPath = pathResolve(process.cwd(), 'dist/sw.js');
-                
-                if (existsSync(swPath)) {
-                  copyFileSync(swPath, distPath);
-                  console.log('✓ Service worker copied to dist/sw.js');
-                } else {
-                  console.log('ℹ Service worker not found, skipping copy');
-                }
-              } catch (error) {
-                console.warn('⚠ Failed to copy service worker:', error.message);
-              }
-              resolve();
+            return new Promise((resolve) => {
+              import('fs').then(({ copyFileSync, existsSync }) => {
+                import('path').then(({ resolve: pathResolve }) => {
+                  try {
+                    const swPath = pathResolve(process.cwd(), 'sw.js');
+                    const distPath = pathResolve(process.cwd(), 'dist/sw.js');
+                    
+                    if (existsSync(swPath)) {
+                      copyFileSync(swPath, distPath);
+                      console.log('✓ Service worker copied to dist/sw.js');
+                    } else {
+                      console.log('ℹ Service worker not found, skipping copy');
+                    }
+                  } catch (error) {
+                    console.warn('⚠ Failed to copy service worker:', error instanceof Error ? error.message : String(error));
+                  }
+                  resolve();
+                }).catch(() => resolve());
+              }).catch(() => resolve());
             });
           }
         }

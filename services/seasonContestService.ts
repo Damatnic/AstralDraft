@@ -709,7 +709,7 @@ class SeasonContestService {
       
       case 'contrarian_pick': {
         // Made prediction against majority - simplified check for now
-        return Object.values(prediction.predictions).some(p => p.confidence < 60);
+        return Object.values(prediction.predictions).some(p => p.confidence != null && p.confidence < 60);
       }
       
       case 'streak_active':
@@ -719,7 +719,7 @@ class SeasonContestService {
       case 'upset_special': {
         // Correctly predicted an upset (low confidence prediction that was correct)
         return Object.values(prediction.predictions).some(p => 
-          p.isCorrect && p.confidence < 50
+          p.isCorrect && p.confidence != null && p.confidence < 50
         );
       }
       

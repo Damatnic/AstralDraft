@@ -53,13 +53,13 @@ export const useOracleRealTime = (userId: string, predictionId: string) => {
 };
 
 /**
- * Hook for collaborative room functionality
+ * Hook for Oracle collaborative features
  */
-export const useCollaborativeRoom = (userId: string, predictionId: string, userInfo: any) => {
+export const useOracleCollaborative = (userId: string, predictionId: string, userInfo?: { username?: string }) => {
     const [room, setRoom] = useState<CollaborativeRoom | null>(null);
     const [messages, setMessages] = useState<CollaborativeMessage[]>([]);
     const [insights, setInsights] = useState<SharedInsight[]>([]);
-    const [polls, setPolls] = useState<CommunityPoll[]>([]);
+    const [polls, setPolls] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -69,9 +69,8 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
             try {
                 setIsLoading(true);
                 const collaborativeRoom = await oracleCollaborativeService.joinCollaborativeRoom(
-                    userId, 
-                    predictionId, 
-                    userInfo
+                    predictionId,
+                    userId
                 );
                 
                 setRoom(collaborativeRoom);
@@ -100,7 +99,6 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
                 userId,
                 predictionId,
                 content,
-                type,
                 mentions
             );
             setMessages(prev => [...prev, message]);
@@ -111,19 +109,18 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
     }, [userId, predictionId]);
 
     // Share insight
-    const shareInsight = useCallback(async (params: InsightCreationParams) => {
+    const shareInsight = useCallback(async (params: any) => {
         try {
             // For now, create a mock insight since the method doesn't exist yet
             const insight: SharedInsight = {
                 id: `insight-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 predictionId,
                 userId,
-                username: userInfo.username || `User${userId}`,
+                username: userInfo?.username || `User${userId}`,
                 title: params.title,
                 content: params.content,
                 type: params.type,
                 confidence: params.confidence,
-                supportingData: params.supportingData || [],
                 tags: params.tags || [],
                 votes: [],
                 timestamp: new Date().toISOString(),
@@ -138,16 +135,16 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
     }, [userId, predictionId, userInfo]);
 
     // Create poll
-    const createPoll = useCallback(async (params: PollCreationParams) => {
+    const createPoll = useCallback(async (params: any) => {
         try {
             // For now, create a mock poll since the method might not be implemented
-            const poll: CommunityPoll = {
+            const poll: any = {
                 id: `poll-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 predictionId,
                 createdBy: userId,
                 title: params.title,
                 question: params.question,
-                options: params.options.map((opt, index) => ({
+                options: params.options.map((opt: any, index: number) => ({
                     id: `opt-${index}-${Math.random().toString(36).substring(2, 6)}`,
                     ...opt
                 })),
@@ -166,29 +163,181 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
         }
     }, [userId, predictionId]);
 
-    // Get room metrics
-    const getRoomMetrics = useCallback(() => {
-        if (!room) return null;
+    // Vote on insight
+    const voteOnInsight = useCallback(async (insightId: string, voteType: 'upvote' | 'downvote') => {
+        try {
+            const updatedInsights = insights.map(i => {
+                if (i.id === insightId) {
+                    const existingVoteIndex = i.votes.findIndex(v => v.userId === userId);
+                    const newVotes = [...i.votes];
+                    
+                    if (existingVoteIndex >= 0) {
+                        if (newVotes[existingVoteIndex].vote === voteType) {
+                            // Remove vote if clicking same type
+                            newVotes.splice(existingVoteIndex, 1);
+                        } else {
+                            // Change vote type
+                            newVotes[existingVoteIndex].vote = voteType;
+                        }
+                    } else {
+                        // Add new vote
+                        newVotes.push({ userId, vote: voteType });
+                    }
+                    
+                    return { ...i, votes: newVotes };
+                }
+                return i;
+            });
+            
+            setInsights(updatedInsights);
+            
+            // Calculate new score
+            const insight = updatedInsights.find(i => i.id === insightId);
+            const score = insight?.votes.reduce((acc, v) => 
+                acc + (v.vote === 'upvote' ? 1 : -1), 0
+            ) || 0;
+            
+            return { success: true, newScore: score };
+        } catch (err) {
+            throw new Error(err instanceof Error ? err.message : 'Failed to vote on insight');
+        }
+    }, [userId, insights]);
 
-        const activeUsers = room.participants?.filter(p => p.isOnline).length || 0;
-        const totalMessages = room.analytics?.totalMessages || messages.length;
-        const consensusLevel = room.analytics?.consensusLevel || 0;
-        
-        // Calculate average confidence from insights
-        const avgConfidence = insights.length > 0
-            ? insights.reduce((sum, insight) => sum + insight.confidence, 0) / insights.length
-            : 0;
-
+    // Get community analytics
+    const getCommunityAnalytics = useCallback(() => {
         return {
-            activeUsers,
-            totalMessages,
-            totalInsights: insights.length,
-            totalPolls: polls.length,
-            consensusLevel,
-            averageConfidence: avgConfidence,
-            engagementScore: room.analytics?.engagementScore || 0
+            totalMessages: messages.length,
+            averageEngagement: messages.length > 0 ? messages.length / (room?.participants?.length || 1) : 0,
+            consensusLevel: calculateConsensusLevel(insights),
+            topContributors: getTopContributors(messages, insights)
         };
-    }, [room, messages.length, insights, polls]);
+    }, [messages, insights, room]);
+
+    // Helper function to calculate consensus
+    const calculateConsensusLevel = (insights: SharedInsight[]) => {
+        if (insights.length === 0) return 0;
+        
+        const averageConfidence = insights.reduce((acc, i) => 
+            acc + (i.confidence || 50), 0
+        ) / insights.length;
+        
+        return Math.round(averageConfidence);
+    };
+
+    // Helper function to get top contributors
+    const getTopContributors = (messages: CollaborativeMessage[], insights: SharedInsight[]) => {
+        const contributions = new Map<string, { username: string; count: number }>();
+        
+        messages.forEach(m => {
+            const existing = contributions.get(m.userId) || { username: m.username, count: 0 };
+            contributions.set(m.userId, { ...existing, count: existing.count + 1 });
+        });
+        
+        insights.forEach(i => {
+            const existing = contributions.get(i.userId) || { username: i.username, count: 0 };
+            contributions.set(i.userId, { ...existing, count: existing.count + 2 }); // Insights worth more
+        });
+        
+        return Array.from(contributions.entries())
+            .map(([userId, data]) => ({ userId, ...data }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+    };
+
+    // React to message
+    const reactToMessage = useCallback(async (messageId: string, reaction: 'HELPFUL' | 'NOT_HELPFUL' | 'MISLEADING') => {
+        try {
+            const reactionMap: Record<string, 'upvote' | 'downvote'> = {
+                'HELPFUL': 'upvote',
+                'NOT_HELPFUL': 'downvote',
+                'MISLEADING': 'downvote'
+            };
+
+            const reactionType = reactionMap[reaction];
+            
+            const updatedMessages = messages.map(m => {
+                if (m.id === messageId) {
+                    const reactions = m.reactions || [];
+                    const existingIndex = reactions.findIndex(r => r.userId === userId);
+                    
+                    if (existingIndex >= 0) {
+                        reactions[existingIndex] = { userId, reaction };
+                    } else {
+                        reactions.push({ userId, reaction });
+                    }
+                    
+                    return { ...m, reactions };
+                }
+                return m;
+            });
+            
+            setMessages(updatedMessages);
+            return { success: true };
+        } catch (err) {
+            throw new Error(err instanceof Error ? err.message : 'Failed to react to message');
+        }
+    }, [userId, messages]);
+
+    // Vote on poll
+    const voteOnPoll = useCallback(async (pollId: string, optionId: string) => {
+        try {
+            const updatedPolls = polls.map((poll: any) => {
+                if (poll.id === pollId) {
+                    const responses = poll.responses || [];
+                    const existingResponseIndex = responses.findIndex((r: any) => r.userId === userId);
+                    
+                    if (existingResponseIndex >= 0) {
+                        // Update existing response
+                        responses[existingResponseIndex] = {
+                            userId,
+                            optionId,
+                            timestamp: new Date().toISOString()
+                        };
+                    } else {
+                        // Add new response
+                        responses.push({
+                            userId,
+                            optionId,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    
+                    // Update option vote counts
+                    const updatedOptions = poll.options.map((option: any) => {
+                        const votes = responses.filter((r: any) => r.optionId === option.id).length;
+                        return { ...option, votes };
+                    });
+                    
+                    return {
+                        ...poll,
+                        responses,
+                        options: updatedOptions,
+                        totalVotes: responses.length
+                    };
+                }
+                return poll;
+            });
+            
+            setPolls(updatedPolls);
+            
+            // Calculate results
+            const poll = updatedPolls.find((p: any) => p.id === pollId);
+            if (poll) {
+                const results = poll.options.map((option: any) => ({
+                    optionId: option.id,
+                    text: option.text,
+                    votes: option.votes,
+                    percentage: poll.totalVotes > 0 ? (option.votes / poll.totalVotes) * 100 : 0
+                }));
+                
+                return { success: true, results };
+            }
+            
+            return { success: false, error: 'Poll not found' };
+        } catch (err) {
+            throw new Error(err instanceof Error ? err.message : 'Failed to vote on poll');
+        }
+    }, [userId, polls]);
 
     return {
         room,
@@ -200,197 +349,46 @@ export const useCollaborativeRoom = (userId: string, predictionId: string, userI
         sendMessage,
         shareInsight,
         createPoll,
-        getRoomMetrics
+        voteOnInsight,
+        reactToMessage,
+        voteOnPoll,
+        getCommunityAnalytics
     };
 };
 
 /**
- * Hook for shared insights functionality
+ * Hook for Oracle notifications
  */
-export const useSharedInsights = (predictionId: string) => {
-    const [insights, setInsights] = useState<SharedInsight[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const useOracleNotifications = (userId: string) => {
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        const loadInsights = () => {
-            try {
-                // Try to get insights if method exists
-                if ('getSharedInsights' in oracleCollaborativeService) {
-                    const existingInsights = (oracleCollaborativeService as any).getSharedInsights(predictionId);
-                    setInsights(existingInsights || []);
-                }
-            } catch (error) {
-                console.error('Failed to load insights:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        // This would connect to a notification service
+        // For now, just track locally
+        const unread = notifications.filter(n => !n.read).length;
+        setUnreadCount(unread);
+    }, [notifications]);
 
-        loadInsights();
-    }, [predictionId]);
+    const markAsRead = useCallback((notificationId: string) => {
+        setNotifications(prev => 
+            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        );
+    }, []);
 
-    const voteOnInsight = useCallback(async (
-        insightId: string,
-        vote: 'HELPFUL' | 'NOT_HELPFUL' | 'MISLEADING',
-        comment?: string
-    ) => {
-        const updateInsightVotes = (insight: SharedInsight) => {
-            if (insight.id !== insightId) return insight;
-            
-            const updatedVotes = insight.votes.filter(v => v.userId !== 'current-user');
-            updatedVotes.push({
-                userId: 'current-user',
-                username: 'Current User',
-                vote,
-                timestamp: new Date().toISOString(),
-                comment
-            });
-            return { ...insight, votes: updatedVotes };
-        };
+    const markAllAsRead = useCallback(() => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }, []);
 
-        try {
-            setInsights(prev => prev.map(updateInsightVotes));
-        } catch (error) {
-            console.error('Failed to vote on insight:', error);
-        }
+    const clearAll = useCallback(() => {
+        setNotifications([]);
     }, []);
 
     return {
-        insights,
-        isLoading,
-        voteOnInsight
-    };
-};
-
-/**
- * Hook for community polls functionality
- */
-export const useCommunityPolls = (predictionId: string) => {
-    const [polls, setPolls] = useState<CommunityPoll[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const loadPolls = () => {
-            try {
-                // Try to get polls if method exists
-                if ('getCommunityPolls' in oracleCollaborativeService) {
-                    const existingPolls = (oracleCollaborativeService as any).getCommunityPolls(predictionId);
-                    setPolls(existingPolls || []);
-                }
-            } catch (error) {
-                console.error('Failed to load polls:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadPolls();
-    }, [predictionId]);
-
-    const respondToPoll = useCallback(async (
-        pollId: string,
-        choices: string[],
-        confidence?: number
-    ) => {
-        const updatePollResponses = (poll: CommunityPoll) => {
-            if (poll.id !== pollId) return poll;
-            
-            // Remove existing response from current user
-            const filteredResponses = poll.responses.filter(r => r.userId !== 'current-user');
-            
-            // Add new response
-            const newResponse = {
-                userId: 'current-user',
-                username: poll.isAnonymous ? undefined : 'Current User',
-                choices,
-                confidence,
-                timestamp: new Date().toISOString(),
-                isAnonymous: poll.isAnonymous
-            };
-            
-            return {
-                ...poll,
-                responses: [...filteredResponses, newResponse]
-            };
-        };
-
-        try {
-            setPolls(prev => prev.map(updatePollResponses));
-        } catch (error) {
-            console.error('Failed to respond to poll:', error);
-        }
-    }, []);
-
-    const getPollResults = useCallback((pollId: string) => {
-        const poll = polls.find(p => p.id === pollId);
-        if (!poll) return null;
-
-        const optionResults = new Map();
-        const totalResponses = poll.responses.length;
-
-        poll.options.forEach(option => {
-            const votes = poll.responses.filter(r => r.choices.includes(option.id)).length;
-            const percentage = totalResponses > 0 ? (votes / totalResponses) * 100 : 0;
-            
-            optionResults.set(option.id, {
-                optionId: option.id,
-                votes,
-                percentage
-            });
-        });
-
-        return {
-            totalResponses,
-            optionResults,
-            poll
-        };
-    }, [polls]);
-
-    return {
-        polls,
-        isLoading,
-        respondToPoll,
-        getPollResults
-    };
-};
-
-/**
- * Hook for Oracle dashboard data
- */
-export const useOracleDashboard = (userId: string, predictionId: string, userInfo: any) => {
-    const realTime = useOracleRealTime(userId, predictionId);
-    const collaborative = useCollaborativeRoom(userId, predictionId, userInfo);
-    const insights = useSharedInsights(predictionId);
-    const polls = useCommunityPolls(predictionId);
-
-    const isFullyConnected = realTime.isConnected && !collaborative.isLoading;
-
-    return {
-        // Real-time connection
-        ...realTime,
-        
-        // Collaborative features
-        room: collaborative.room,
-        messages: collaborative.messages,
-        sendMessage: collaborative.sendMessage,
-        
-        // Insights
-        insights: insights.insights,
-        shareInsight: collaborative.shareInsight,
-        voteOnInsight: insights.voteOnInsight,
-        
-        // Polls
-        polls: polls.polls,
-        createPoll: collaborative.createPoll,
-        respondToPoll: polls.respondToPoll,
-        getPollResults: polls.getPollResults,
-        
-        // Metrics
-        getRoomMetrics: collaborative.getRoomMetrics,
-        
-        // Overall state
-        isFullyConnected,
-        isLoading: collaborative.isLoading || insights.isLoading || polls.isLoading,
-        error: realTime.connectionError || collaborative.error
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        clearAll
     };
 };

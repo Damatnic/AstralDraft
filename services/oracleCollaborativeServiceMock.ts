@@ -9,6 +9,13 @@ export interface CollaborativeMessage {
     timestamp: string;
     predictionId: string;
     mentions?: string[];
+    type?: string;
+    reactions?: Array<{
+        emoji: string;
+        userId: string;
+        username: string;
+        timestamp: string;
+    }>;
 }
 
 export interface CollaborativeRoom {
@@ -24,6 +31,19 @@ export interface CollaborativeRoom {
         messageLimit: number;
         moderationEnabled: boolean;
     };
+    analytics?: {
+        totalMessages: number;
+        averageEngagement: number;
+        consensusLevel: number;
+        topContributors: Array<{
+            userId: string;
+            username: string;
+            messageCount: number;
+        }>;
+    };
+    messages?: CollaborativeMessage[];
+    sharedInsights?: SharedInsight[];
+    polls?: CommunityPoll[];
 }
 
 export interface SharedInsight {
@@ -37,6 +57,31 @@ export interface SharedInsight {
         vote: 'upvote' | 'downvote';
     }>;
     timestamp: string;
+    confidence?: number;
+    title?: string;
+    type?: string;
+}
+
+export interface CommunityPoll {
+    id: string;
+    question: string;
+    title?: string;
+    options: Array<{
+        id: string;
+        text: string;
+        votes: number;
+    }>;
+    responses?: Array<{
+        userId: string;
+        optionId: string;
+        timestamp: string;
+    }>;
+    totalVotes: number;
+    createdBy: string;
+    predictionId: string;
+    endTime: string;
+    expiresAt?: string;
+    isActive: boolean;
 }
 
 // Mock collaborative service for testing
@@ -93,6 +138,18 @@ class OracleCollaborativeServiceMock extends EventEmitter {
         if (participant) {
             participant.isOnline = false;
         }
+    }
+
+    async joinCollaborativeRoom(predictionId: string, userId: string): Promise<CollaborativeRoom> {
+        // First create room if it doesn't exist
+        let room = this.rooms.get(predictionId);
+        if (!room) {
+            room = await this.createRoom(predictionId, userId);
+        } else {
+            // Join existing room
+            await this.joinRoom(predictionId, userId);
+        }
+        return room;
     }
 
     async sendMessage(

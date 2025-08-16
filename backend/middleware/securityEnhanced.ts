@@ -27,7 +27,7 @@ const MALICIOUS_PATTERNS = [
     /(javascript:|vbscript:|data:text\/html)/gi,
     /(union\s+select|drop\s+table|insert\s+into|delete\s+from)/gi,
     /(exec\s*\(|eval\s*\()/gi,
-    /(\.\.\/)|(\.\.\\/g, // Path traversal
+    /(\.\.\/)|(\.\.\\/)/g, // Path traversal
     /(cmd\s*=|command\s*=|exec\s*=)/gi,
     /(<iframe|<object|<embed|<applet)/gi,
     /(onclick|onerror|onload|onmouseover)\s*=/gi
@@ -41,7 +41,7 @@ export const sanitizeInput = (input: any): string => {
     
     // Use validator.js for comprehensive sanitization
     let sanitized = validator.escape(input);
-    sanitized = validator.stripLow(sanitized, { keep_new_lines: true });
+    sanitized = validator.stripLow(sanitized, true);
     
     // Additional SQL injection protection
     sanitized = sanitized

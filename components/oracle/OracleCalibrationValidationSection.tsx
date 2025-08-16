@@ -2261,12 +2261,12 @@ const OracleCalibrationValidationSection: React.FC = () => {
       sum + (bin.calibrated.count / nSamples) * bin.calibrated.calibrationError, 0);
 
     // Calculate performance metrics
-    const accuracy = trueLabels.reduce((a, b) => a + b, 0) / nSamples;
+    const accuracy = trueLabels.reduce((a: number, b: number) => a + b, 0) / nSamples;
     const threshold = 0.5;
     const predicted = calibratedPredictions.map(p => p > threshold ? 1 : 0);
-    const tp = predicted.reduce((sum, p, i) => sum + (p === 1 && trueLabels[i] === 1 ? 1 : 0), 0);
-    const fp = predicted.reduce((sum, p, i) => sum + (p === 1 && trueLabels[i] === 0 ? 1 : 0), 0);
-    const fn = predicted.reduce((sum, p, i) => sum + (p === 0 && trueLabels[i] === 1 ? 1 : 0), 0);
+    const tp = predicted.reduce((sum: number, p: number, i: number) => sum + (p === 1 && trueLabels[i] === 1 ? 1 : 0), 0);
+    const fp = predicted.reduce((sum: number, p: number, i: number) => sum + (p === 1 && trueLabels[i] === 0 ? 1 : 0), 0);
+    const fn = predicted.reduce((sum: number, p: number, i: number) => sum + (p === 0 && trueLabels[i] === 1 ? 1 : 0), 0);
     const precision = tp / (tp + fp) || 0;
     const recall = tp / (tp + fn) || 0;
     const f1Score = 2 * (precision * recall) / (precision + recall) || 0;
@@ -2295,7 +2295,7 @@ const OracleCalibrationValidationSection: React.FC = () => {
       },
       calibrationMetrics: {
         brierScore: calBrierScore,
-        logLoss: -trueLabels.reduce((sum, label, i) => 
+        logLoss: -trueLabels.reduce((sum: number, label: number, i: number) => 
           sum + label * Math.log(calibratedPredictions[i]) + (1 - label) * Math.log(1 - calibratedPredictions[i]), 0) / nSamples,
         calibrationError: calECE,
         reliability: 1 - calECE,
@@ -2383,10 +2383,10 @@ const OracleCalibrationValidationSection: React.FC = () => {
     const binaryGroundTruth = groundTruth.map(p => p > threshold ? 1 : 0);
 
     // Calculate classification metrics
-    const tp = binaryPredictions.reduce((sum, pred, i) => sum + (pred === 1 && binaryGroundTruth[i] === 1 ? 1 : 0), 0);
-    const fp = binaryPredictions.reduce((sum, pred, i) => sum + (pred === 1 && binaryGroundTruth[i] === 0 ? 1 : 0), 0);
-    const tn = binaryPredictions.reduce((sum, pred, i) => sum + (pred === 0 && binaryGroundTruth[i] === 0 ? 1 : 0), 0);
-    const fn = binaryPredictions.reduce((sum, pred, i) => sum + (pred === 0 && binaryGroundTruth[i] === 1 ? 1 : 0), 0);
+    const tp = binaryPredictions.reduce((sum: number, pred: number, i: number) => sum + (pred === 1 && binaryGroundTruth[i] === 1 ? 1 : 0), 0);
+    const fp = binaryPredictions.reduce((sum: number, pred: number, i: number) => sum + (pred === 1 && binaryGroundTruth[i] === 0 ? 1 : 0), 0);
+    const tn = binaryPredictions.reduce((sum: number, pred: number, i: number) => sum + (pred === 0 && binaryGroundTruth[i] === 0 ? 1 : 0), 0);
+    const fn = binaryPredictions.reduce((sum: number, pred: number, i: number) => sum + (pred === 0 && binaryGroundTruth[i] === 1 ? 1 : 0), 0);
 
     const accuracy = (tp + tn) / (tp + tn + fp + fn);
     const precision = tp / (tp + fp) || 0;
@@ -2441,7 +2441,7 @@ const OracleCalibrationValidationSection: React.FC = () => {
         auc: rocAuc,
         rocAuc,
         prAuc,
-        logLoss: -binaryGroundTruth.reduce((sum, actual, i) => 
+        logLoss: -binaryGroundTruth.reduce((sum: number, actual: number, i: number) => 
           sum + actual * Math.log(Math.max(predictions[i], 1e-15)) + (1 - actual) * Math.log(Math.max(1 - predictions[i], 1e-15)), 0) / nSamples,
         matthews: (tp * tn - fp * fn) / Math.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)) || 0,
         kappa: 2 * (tp * tn - fn * fp) / ((tp + fp) * (fp + tn) + (tp + fn) * (fn + tn)) || 0,

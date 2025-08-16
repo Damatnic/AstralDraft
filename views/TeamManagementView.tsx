@@ -51,8 +51,8 @@ const TeamManagementView: React.FC<TeamManagementViewProps> = () => {
     }, [userTeam, selectedTeamId]);
 
     const selectedTeam = league.teams.find(team => team.id === selectedTeamId);
-    const isCommissioner = state.user.id === league.commissionerId;
-    const canManageTeam = selectedTeam && (selectedTeam.owner.id === state.user.id || isCommissioner);
+    const isCommissioner = state.user?.id === league.commissionerId;
+    const canManageTeam = Boolean(selectedTeam && state.user && (selectedTeam.owner.id === state.user.id || isCommissioner));
 
     const tabs = [
         { id: 'roster', label: 'Roster Management', icon: <UsersIcon className="w-4 h-4" />, description: 'Edit roster, manage positions, view player details' },

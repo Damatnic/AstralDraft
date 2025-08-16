@@ -141,8 +141,12 @@ const MobileSearchInterface: React.FC<MobileSearchInterfaceProps> = ({
 
         // Apply sorting
         filtered.sort((a, b) => {
-            const aVal = a[sortBy.key] as any;
-            const bVal = b[sortBy.key] as any;
+            const aVal = sortBy.key === 'projection' 
+                ? (a as any).projection || 0 
+                : (a as any)[sortBy.key];
+            const bVal = sortBy.key === 'projection' 
+                ? (b as any).projection || 0 
+                : (b as any)[sortBy.key];
             
             if (typeof aVal === 'string' && typeof bVal === 'string') {
                 return sortBy.direction === 'asc' 

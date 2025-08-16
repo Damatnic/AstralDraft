@@ -25,7 +25,7 @@ const Breadcrumbs: React.FC = () => {
         let view: View | undefined = currentView;
 
         while(view) {
-            const hierarchy = viewHierarchy[view];
+            const hierarchy: { parent: View, name: string } | undefined = viewHierarchy[view];
             const name = hierarchy?.name || viewNames[view] || view.replace(/_/g, ' ');
             crumbs.unshift({ name, view });
             view = hierarchy?.parent;

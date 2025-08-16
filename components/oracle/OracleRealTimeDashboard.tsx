@@ -27,7 +27,8 @@ import { oracleRealTimeService, LivePredictionUpdate } from '../../services/orac
 import oracleCollaborativeService, { 
     CollaborativeMessage, 
     SharedInsight, 
-    CollaborativeRoom 
+    CollaborativeRoom,
+    CommunityPoll
 } from '../../services/oracleCollaborativeServiceMock';
 
 interface OracleRealTimeDashboardProps {
@@ -85,9 +86,8 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
                 
                 // Join collaborative room
                 const room = await oracleCollaborativeService.joinCollaborativeRoom(
-                    userId, 
-                    predictionId, 
-                    userInfo
+                    predictionId,
+                    userId
                 );
                 
                 setCollaborativeRoom(room);
@@ -132,7 +132,7 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
         // Calculate average confidence from recent insights
         const recentInsights = insights.slice(-10);
         const confidenceAverage = recentInsights.length > 0
-            ? recentInsights.reduce((sum, insight) => sum + insight.confidence, 0) / recentInsights.length
+            ? recentInsights.reduce((sum, insight) => sum + (insight.confidence || 0), 0) / recentInsights.length
             : 0;
 
         // Determine trending direction based on recent activity
@@ -179,8 +179,7 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
             const message = await oracleCollaborativeService.sendMessage(
                 userId,
                 predictionId,
-                messageInput.trim(),
-                'DISCUSSION'
+                messageInput.trim()
             );
 
             setMessages(prev => [...prev, message]);
@@ -407,22 +406,22 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
                                                 {formatTimestamp(insight.timestamp)}
                                             </span>
                                             <Badge variant="outline">
-                                                {insight.type.replace('_', ' ')}
+                                                {insight.type?.replace('_', ' ') || 'General'}
                                             </Badge>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <div className={`font-medium ${getConfidenceColor(insight.confidence)}`}>
-                                            {insight.confidence}%
+                                        <div className={`font-medium ${getConfidenceColor(insight.confidence || 0)}`}>
+                                            {insight.confidence || 0}%
                                         </div>
                                         <div className="flex items-center space-x-1 mt-2">
                                             <button className="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center space-x-1">
                                                 <ThumbsUp className="h-3 w-3" />
-                                                <span>{insight.votes.filter(v => v.vote === 'HELPFUL').length}</span>
+                                                <span>{insight.votes.filter(v => v.vote === 'upvote').length}</span>
                                             </button>
                                             <button className="px-2 py-1 text-xs bg-gray-100 rounded hover:bg-gray-200 transition-colors flex items-center space-x-1">
                                                 <ThumbsDown className="h-3 w-3" />
-                                                <span>{insight.votes.filter(v => v.vote === 'NOT_HELPFUL').length}</span>
+                                                <span>{insight.votes.filter(v => v.vote === 'downvote').length}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -438,9 +437,10 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
     // Helper function to calculate poll option results
     const calculatePollOptionResults = (poll: CommunityPoll) => {
         return poll.options.map((option) => {
-            const votes = poll.responses.filter(r => r.choices.includes(option.id)).length;
-            const percentage = poll.responses.length > 0 
-                ? (votes / poll.responses.length) * 100 
+            const votes = poll.responses?.filter(r => r.optionId === option.id).length || 0;
+            const totalResponses = poll.responses?.length || 0;
+            const percentage = totalResponses > 0 
+                ? (votes / totalResponses) * 100 
                 : 0;
             
             return {
@@ -481,10 +481,10 @@ const OracleRealTimeDashboard: React.FC<OracleRealTimeDashboardProps> = ({
                                     ))}
                                 </div>
                                 <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
-                                    <span>{poll.responses.length} responses</span>
+                                    <span>{poll.responses?.length || 0} responses</span>
                                     <span className="flex items-center space-x-1">
                                         <Clock className="h-3 w-3" />
-                                        <span>Expires {new Date(poll.expiresAt).toLocaleDateString()}</span>
+                                        <span>Expires {poll.expiresAt ? new Date(poll.expiresAt).toLocaleDateString() : 'N/A'}</span>
                                     </span>
                                 </div>
                             </div>

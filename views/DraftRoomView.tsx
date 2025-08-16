@@ -115,7 +115,7 @@ const DraftRoomContainer: React.FC<DraftRoomContainerProps> = ({ league, isPause
                 {isAuction ? (
                      <AuctionPanel
                         nominatingTeam={auctionDraftState.nominatingTeam || undefined}
-                        nominatedPlayer={auctionDraftState.nominatedPlayer}
+                        nominatedPlayer={auctionDraftState.nominatedPlayer || null}
                         currentBid={auctionDraftState.currentBid}
                         highBidder={auctionDraftState.highBidderTeam}
                         timeLeft={auctionDraftState.timeLeft}

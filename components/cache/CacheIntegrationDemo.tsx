@@ -221,7 +221,7 @@ const CacheIntegrationDemo: React.FC = () => {
                                                 <div className="flex items-center justify-between text-xs">
                                                     <span className="text-gray-400">Last Updated:</span>
                                                     <span className="text-gray-300">
-                                                        {new Date(cache.lastUpdated).toLocaleTimeString()}
+                                                        {cache.lastUpdated ? new Date(cache.lastUpdated).toLocaleTimeString() : 'Never'}
                                                     </span>
                                                 </div>
                                             )}

@@ -227,7 +227,7 @@ export const ProductionAuthProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     const refreshInterval = setInterval(async () => {
       try {
-        const decoded = jwtDecode<JWTPayload>(authState.token);
+        const decoded = jwtDecode<JWTPayload>(authState.token!);
         const timeUntilExpiry = decoded.exp * 1000 - Date.now();
         
         // Refresh if token expires in less than 5 minutes

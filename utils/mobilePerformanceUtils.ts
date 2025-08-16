@@ -18,11 +18,16 @@ export function debounce<T extends (...args: any[]) => any>(
 ): DebouncedFunction<T> {
     let timeout: NodeJS.Timeout | null = null;
     let result: ReturnType<T>;
+    let savedThis: any;
+    let savedArgs: Parameters<T>;
 
     const debounced = function(this: any, ...args: Parameters<T>) {
+        savedThis = this;
+        savedArgs = args;
+        
         const later = () => {
             timeout = null;
-            if (!immediate) result = func.apply(this, args);
+            if (!immediate) result = func.apply(savedThis, savedArgs);
         };
 
         const callNow = immediate && !timeout;
@@ -44,7 +49,7 @@ export function debounce<T extends (...args: any[]) => any>(
         if (timeout) {
             clearTimeout(timeout);
             timeout = null;
-            result = func.apply(this, arguments as any);
+            result = func.apply(savedThis, savedArgs);
         }
     };
 
@@ -59,10 +64,15 @@ export function throttle<T extends (...args: any[]) => any>(
     let timeout: NodeJS.Timeout | null = null;
     let previous = 0;
     let result: ReturnType<T>;
+    let savedThis: any;
+    let savedArgs: Parameters<T>;
 
     const { leading = true, trailing = true } = options;
 
     const throttled = function(this: any, ...args: Parameters<T>) {
+        savedThis = this;
+        savedArgs = args;
+        
         const now = Date.now();
         
         if (!previous && !leading) previous = now;
@@ -80,7 +90,7 @@ export function throttle<T extends (...args: any[]) => any>(
             timeout = setTimeout(() => {
                 previous = leading ? Date.now() : 0;
                 timeout = null;
-                result = func.apply(this, args);
+                result = func.apply(savedThis, savedArgs);
             }, remaining);
         }
     };
@@ -97,7 +107,7 @@ export function throttle<T extends (...args: any[]) => any>(
         if (timeout) {
             clearTimeout(timeout);
             timeout = null;
-            result = func.apply(this, arguments as any);
+            result = func.apply(savedThis, savedArgs);
         }
     };
 
