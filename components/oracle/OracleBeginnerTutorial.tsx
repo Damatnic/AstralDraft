@@ -27,7 +27,7 @@ interface PracticeChallenge {
     type: 'prediction' | 'confidence' | 'reasoning';
     scenario: string;
     options?: string[];
-    expectedAnswer?: any;
+    expectedAnswer?: string | number;
 }
 
 interface UserProgress {
@@ -812,7 +812,7 @@ const OracleBeginnerTutorial: React.FC = () => {
                 <div className="completion-celebration">
                     <div className="celebration-header">
                         <h2>🎉 Congratulations!</h2>
-                        <h3>You've completed the Oracle Beginner Tutorial!</h3>
+                        <h3>You&apos;ve completed the Oracle Beginner Tutorial!</h3>
                     </div>
                     
                     <div className="completion-stats">
@@ -1007,14 +1007,14 @@ const OracleBeginnerTutorial: React.FC = () => {
                                     {currentTutorialStep.practiceChallenge.type === 'prediction' ? (
                                         <div className={`result ${selectedAnswer === currentTutorialStep.practiceChallenge.expectedAnswer ? 'correct' : 'incorrect'}`}>
                                             {selectedAnswer === currentTutorialStep.practiceChallenge.expectedAnswer ? '🎯 Great thinking!' : '📚 Good attempt!'}
-                                            <p>The key insight is understanding how multiple factors combine to influence Oracle's confidence.</p>
+                                            <p>The key insight is understanding how multiple factors combine to influence Oracle&apos;s confidence.</p>
                                         </div>
                                     ) : (
                                         <div className="reasoning-feedback">
                                             <div className="score">
                                                 Score: {userProgress.practiceScores[currentStep] || 0}/100
                                             </div>
-                                            <p>Excellent reasoning! You're thinking like a fantasy expert. Key factors to consider: {currentTutorialStep.practiceChallenge.expectedAnswer}</p>
+                                            <p>Excellent reasoning! You&apos;re thinking like a fantasy expert. Key factors to consider: {currentTutorialStep.practiceChallenge.expectedAnswer}</p>
                                         </div>
                                     )}
                                 </div>
